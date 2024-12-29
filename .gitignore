@@ -36,3 +36,7 @@
 *.sln
 *.vcxproj
 *.vcxproj.*
+
+# build folders
+bin/
+obj/
