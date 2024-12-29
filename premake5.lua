@@ -1,6 +1,9 @@
 -- premake5.lua
 workspace "courier"
 	configurations { "Debug", "Release" }
+
+	startproject "example"
+
 	warnings "Extra"
 	flags { "FatalWarnings", "MultiProcessorCompile" }
 	
