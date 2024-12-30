@@ -22,7 +22,7 @@ workspace "courier"
 		flags { "FatalWarnings", "MultiProcessorCompile"}
 
 	filter "action:gmake"
-		fatalwarnings "All"
+		fatalwarnings { "All" }
 		flags {"MultiProcessorCompile"}
 		linkoptions { "-fopenmp" }
 
