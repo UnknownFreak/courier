@@ -5,8 +5,6 @@ workspace "courier"
 	startproject "example"
 
 	warnings "Extra"
-	fatalwarnings "All"
-	flags { "MultiProcessorCompile" }
 	
 	cppdialect "C++20"
 	language "C++"
@@ -20,7 +18,12 @@ workspace "courier"
 		defines {"NDEBUG" }
 		optimize "On"
 
+	filter "action:vs*"
+		flags { "FatalWarnings", "MultiProcessorCompile"}
+
 	filter "action:gmake"
+		fatalwarnings "All"
+		flags {"MultiProcessorCompile"}
 		linkoptions { "-fopenmp" }
 
 
