@@ -1,6 +1,7 @@
 #include <courier/channel.hpp>
 #include <courier/logger.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 
@@ -34,10 +35,15 @@ namespace courier
 	{
 		if (mMultithreadedEnabled)
 		{
+#ifdef _WIN32
+			int index;
+#else
+			size_t index;
+#endif
 			#pragma omp parallel for
-			for (int it = 0 ; it < subscribers.size(); it++)
+			for (index = 0 ; index < subscribers.size(); index++)
 			{
-				subscribers[(size_t)it].sendMessage(message);
+				subscribers[index].sendMessage(message);
 			}
 		}
 		else

@@ -24,8 +24,13 @@ namespace courier
 		size_t count = Channel::sendMessage(message);
 		if (mMultithreadedEnabled)
 		{
+#ifdef _WIN32
+			int index;
+#else
+			size_t index;
+#endif
 			#pragma omp parallel for
-			for(int index = 0; index < channels.size();  index++)
+			for(index = 0; index < channels.size();  index++)
 			{
 				count += channels[index]->sendMessage(message);
 			}
