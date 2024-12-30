@@ -5,7 +5,8 @@ workspace "courier"
 	startproject "example"
 
 	warnings "Extra"
-	flags { "FatalWarnings", "MultiProcessorCompile" }
+	fatalwarnings "All"
+	flags { "MultiProcessorCompile" }
 	
 	cppdialect "C++20"
 	language "C++"
@@ -19,6 +20,9 @@ workspace "courier"
 		defines {"NDEBUG" }
 		optimize "On"
 
+	filter "action:gmake"
+		linkoptions { "-fopenmp" }
+
 
 include "courier.lua"
 	
@@ -27,9 +31,9 @@ project "example"
 	kind "consoleApp"
 	
 	targetdir "bin/%{cfg.buildcfg}"
-	
+
 	includedirs { "include" }
-	
+
 	links { "courier" }
 	files { "example/**.cpp" }
-	
+
