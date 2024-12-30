@@ -7,6 +7,16 @@ This project uses premake5 to generate the project files (https://premake.github
 
 Generate project with either premake.bat for windows or premake.sh for linux
 
+## windows
+	in visual studio build the project and run the example project
+
+## linux
+```
+	make -jX # where X is number of parallel jobs.
+	make config=release # to build release
+	./bin/debug/example
+```
+
 # including in your project
 
 If you're using premake yourself, include the courier.lua in your premake5.lua file.
