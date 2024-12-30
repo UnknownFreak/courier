@@ -25,6 +25,12 @@ project "myproject"
 
 ```
 
+in order to link properly when making linux applications add the following line to the workspace or to the application project(s)
+```
+	filter "action:gmake"
+		linkoptions { "-fopenmp" }
+```
+
 Manually
 
 Generate the project files, and manually add the references to the project.
