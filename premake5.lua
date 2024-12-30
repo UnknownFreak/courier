@@ -10,6 +10,8 @@ workspace "courier"
 	language "C++"
 	architecture "x64"
 	
+	flags { "FatalCompileWarnings", "MultiProcessorCompile"}
+	
 	filter "configurations:Debug"
 		defines {"DEBUG"}
 		symbols "On"
@@ -18,12 +20,7 @@ workspace "courier"
 		defines {"NDEBUG" }
 		optimize "On"
 
-	filter "action:vs*"
-		flags { "FatalWarnings", "MultiProcessorCompile"}
-
 	filter "action:gmake"
-		fatalwarnings { "All" }
-		flags {"MultiProcessorCompile"}
 		linkoptions { "-fopenmp" }
 
 
