@@ -1,6 +1,6 @@
 -- premake5.lua
 workspace "courier"
-	configurations { "Debug", "Release" }
+	configurations { "debug", "release" }
 
 	startproject "example"
 
@@ -12,11 +12,11 @@ workspace "courier"
 	
 	flags { "FatalCompileWarnings", "MultiProcessorCompile"}
 	
-	filter "configurations:Debug"
+	filter "configurations:debug"
 		defines {"DEBUG"}
 		symbols "On"
 		
-	filter "configurations:Release"
+	filter "configurations:release"
 		defines {"NDEBUG" }
 		optimize "On"
 
