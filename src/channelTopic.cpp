@@ -1,13 +1,7 @@
 #include <courier/channelTopic.hpp>
 #include <courier/logger.hpp>
 
-#ifdef _WIN32
-#include <ppl.h>
-#define _PPL 1
-#else
 #include <omp.h>
-#define _PPL 0
-#endif
 
 namespace courier
 {
@@ -30,19 +24,11 @@ namespace courier
 		size_t count = Channel::sendMessage(message);
 		if (mMultithreadedEnabled)
 		{
-#if defined _PPL && _PPL == 1
-			concurrency::parallel_for_each(channels.begin(), channels.end(),
-				[&](auto& pair)
-				{
-					count += pair.second->sendMessage(message);
-				});
-#else
-			//#pragma omp parallel for
-			for (auto& channel : channels)
+			#pragma omp parallel for
+			for(int index = 0; index < channels.size();  index++)
 			{
-				count += channel.second->sendMessage(message);
+				count += channels[index]->sendMessage(message);
 			}
-#endif
 		}
 		else
 		{

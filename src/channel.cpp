@@ -4,15 +4,7 @@
 #include <memory>
 #include <string>
 
-
-#ifdef _WIN32
-#include <ppl.h>
-#define _PPL 1
-#else
 #include <omp.h>
-#define _PPL 0
-#endif
-
 
 namespace courier
 {
@@ -42,21 +34,11 @@ namespace courier
 	{
 		if (mMultithreadedEnabled)
 		{
-		#if defined _PPL && _PPL == 1
-			concurrency::parallel_for((size_t)0, subscribers.size(),
-				[&](size_t index)
-				{
-					subscribers[index].sendMessage(message);
-				});
-		
-		#else
-			// TODO: figure out for linux build
-			//#pragma omp parallel for
-			for (auto it = subscribers.begin(); it != subscribers.end(); it++)
+			#pragma omp parallel for
+			for (int it = 0 ; it < subscribers.size(); it++)
 			{
-				it->second.sendMessage(message);
+				subscribers[(size_t)it].sendMessage(message);
 			}
-		#endif
 		}
 		else
 		{

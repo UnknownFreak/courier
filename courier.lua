@@ -10,3 +10,5 @@ project "courier"
 	vpaths { ["other"] = {".gitignore", "LICENSE", "README.md", "premake5.lua", "courier.lua", "premake.bat", "premake.sh"} }
 	
 	includedirs { "include" }
+
+	openmp "On"

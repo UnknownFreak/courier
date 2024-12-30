@@ -28,3 +28,12 @@ project "myproject"
 Manually
 
 Generate the project files, and manually add the references to the project.
+
+# Requirements
+Premake5
+
+## linux
+g++ 13.1 or later for std::format
+
+## windows
+vs 2022 or later
