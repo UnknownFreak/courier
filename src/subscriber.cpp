@@ -7,15 +7,15 @@ size_t g_subscriberId = 1;
 namespace courier
 {
 
-	Subscriber::Subscriber() : m_ptr(), m_isAlive(), id(0)
+	Subscriber::Subscriber() : id(0),  m_ptr(), m_isAlive()
 	{
 	}
 
-	Subscriber::Subscriber(const std::weak_ptr<bool>& isAlive, const std::function<void(const Message&)>& function) : m_ptr(function), m_isAlive(isAlive), id(g_subscriberId++)
+	Subscriber::Subscriber(const std::weak_ptr<bool>& isAlive, const std::function<void(const Message&)>& function) : id(g_subscriberId++), m_ptr(function), m_isAlive(isAlive)
 	{
 	}
 
-	Subscriber::Subscriber(const Subscriber& sub) : m_ptr(sub.m_ptr), m_isAlive(sub.m_isAlive), id(sub.id)
+	Subscriber::Subscriber(const Subscriber& sub) : id(sub.id), m_ptr(sub.m_ptr), m_isAlive(sub.m_isAlive)
 	{
 	}
 
