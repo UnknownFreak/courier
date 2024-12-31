@@ -2,5 +2,5 @@
 
 namespace courier
 {
-	enum class SubscriberId : size_t { NOT_SET };
+	enum class SubscriberId { NOT_SET };
 }

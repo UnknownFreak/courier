@@ -2,5 +2,5 @@
 
 namespace courier
 {
-	enum class ChannelId : size_t { NOT_SET};
+	enum class ChannelId { NOT_SET};
 }
