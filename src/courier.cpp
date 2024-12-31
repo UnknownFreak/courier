@@ -125,10 +125,10 @@ namespace courier
 
 	void Courier::createChannel(const Topic topic)
 	{
-		channels[topic] = std::make_shared<ChannelTopic>();
+		channels[topic] = std::make_shared<MultiChannel>();
 	}
 
-	std::shared_ptr<ChannelTopic> Courier::getChannel(const Topic topic)
+	std::shared_ptr<MultiChannel> Courier::getChannel(const Topic topic)
 	{
 		if (channels.find(topic) == channels.end())
 		{
