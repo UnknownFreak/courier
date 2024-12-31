@@ -1,5 +1,6 @@
 #include <courier/message.hpp>
-
+#include <courier/subscriberId.hpp>
+#include <courier/channelId.hpp>
 
 namespace courier::internal
 {
@@ -7,8 +8,8 @@ namespace courier::internal
 	{
 		const bool sendToChannel;
 		const bool sendToSubscriber;
-		const size_t channel;
-		const size_t subscriber;
+		const ChannelId channel;
+		const SubscriberId subscriber;
 		const Message message;
 	};
 }

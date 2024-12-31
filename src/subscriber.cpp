@@ -7,11 +7,11 @@ size_t g_subscriberId = 1;
 namespace courier
 {
 
-	Subscriber::Subscriber() : id(0),  m_ptr(), m_isAlive()
+	Subscriber::Subscriber() : id((SubscriberId)0),  m_ptr(), m_isAlive()
 	{
 	}
 
-	Subscriber::Subscriber(const std::weak_ptr<bool>& isAlive, const std::function<void(const Message&)>& function) : id(g_subscriberId++), m_ptr(function), m_isAlive(isAlive)
+	Subscriber::Subscriber(const std::weak_ptr<bool>& isAlive, const std::function<void(const Message&)>& function) : id((SubscriberId)g_subscriberId++), m_ptr(function), m_isAlive(isAlive)
 	{
 	}
 
@@ -46,7 +46,7 @@ namespace courier
 
 	bool Subscriber::operator < (const Subscriber& other) const
 	{
-		return id < other.id;
+		return (size_t)id < (size_t)other.id;
 	}
 
 	bool Subscriber::operator ==(const Subscriber& other) const

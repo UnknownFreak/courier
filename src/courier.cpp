@@ -20,7 +20,7 @@ namespace courier
 		}
 	}
 
-	void Courier::post(const Topic topic, const size_t subscriber, const Message& message)
+	void Courier::post(const Topic topic, const SubscriberId subscriber, const Message& message)
 	{
 		if (channels.find(topic) != channels.end())
 		{
@@ -32,11 +32,23 @@ namespace courier
 		}
 	}
 
-	void Courier::post(const Topic topic, const size_t channel, const size_t subscriber, const Message& message)
+	void Courier::post(const Topic topic, const ChannelId channel, const Message& message)
 	{
 		if (channels.find(topic) != channels.end())
 		{
-			if(subscriber == 0)
+			m_messages += channels[topic]->sendMessage(channel, message);
+		}
+		else
+		{
+			warning("Trying to post a message to a topic that has no registererd channel.");
+		}
+	}
+
+	void Courier::post(const Topic topic, const ChannelId channel, const SubscriberId subscriber, const Message& message)
+	{
+		if (channels.find(topic) != channels.end())
+		{
+			if(subscriber == SubscriberId::NOT_SET)
 				m_messages += channels[topic]->sendMessage(channel, message);
 			else
 				m_messages += channels[topic]->sendMessage(channel, subscriber, message);
@@ -52,22 +64,31 @@ namespace courier
 		{
 
 			scheduledMessages[topic].push_back(internal::ScheduledMessage{
-				false, false, 0, 0, message
+				false, false, ChannelId::NOT_SET, SubscriberId::NOT_SET, message
 			});
 		}
 		mtx.unlock();
 	}
 
-	void Courier::schedule(const Topic topic, const size_t subscriberId, const Message& message)
+	void Courier::schedule(const Topic topic, const SubscriberId subscriberId, const Message& message)
 	{
 		mtx.lock();
 		{
-			scheduledMessages[topic].push_back(internal::ScheduledMessage{ false, true, 0, subscriberId, message });
+			scheduledMessages[topic].push_back(internal::ScheduledMessage{ false, true, ChannelId::NOT_SET, subscriberId, message });
 		}
 		mtx.unlock();
 	}
 
-	void Courier::schedule(const Topic topic, const size_t channel, const size_t subscriber, const Message& message)
+	void Courier::schedule(const Topic topic, const ChannelId channel, const Message& message)
+	{
+		mtx.lock();
+		{
+			scheduledMessages[topic].push_back(internal::ScheduledMessage{ false, true, channel, SubscriberId::NOT_SET, message });
+		}
+		mtx.unlock();
+	}
+
+	void Courier::schedule(const Topic topic, const ChannelId channel, const SubscriberId subscriber, const Message& message)
 	{
 		mtx.lock();
 		{
@@ -78,7 +99,7 @@ namespace courier
 		mtx.unlock();
 	}
 
-	size_t Courier::addSubscriber(const Topic topic, const Subscriber& subscriber)
+	SubscriberId Courier::addSubscriber(const Topic topic, const Subscriber& subscriber)
 	{
 		if (channels.find(topic) == channels.end())
 		{
@@ -89,7 +110,7 @@ namespace courier
 		return channels[topic]->addSubscriber(subscriber);
 	}
 
-	void Courier::removeSubscriber(const Topic topic, size_t subscriberId)
+	void Courier::removeSubscriber(const Topic topic, SubscriberId subscriberId)
 	{
 		if (channels.find(topic) != channels.end())
 		{
@@ -98,7 +119,7 @@ namespace courier
 		else
 		{
 			warning("Trying to remove a subscriber from a topic that has no registererd channel.");
-			warning(std::format("Topic = {}, subscriberId = {}", (unsigned int)topic, subscriberId));
+			warning(std::format("Topic = {}, subscriberId = {}", (size_t)topic, (size_t)subscriberId));
 		}
 	}
 
@@ -117,7 +138,7 @@ namespace courier
 	}
 
 
-	void Courier::scheduleRemoval(const Topic topic, const size_t subscriberId)
+	void Courier::scheduleRemoval(const Topic topic, const SubscriberId subscriberId)
 	{
 		channels[topic]->scheduleRemoval(subscriberId);
 	}

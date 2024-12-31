@@ -34,9 +34,9 @@ struct exampleSubscriber
 {
 	// isAlive makes sure the subscriber target callback is valid before executing
 	std::shared_ptr<bool> isAlive;
-	size_t subscriberId;
+	courier::SubscriberId subscriberId;
 
-	exampleSubscriber() : isAlive(std::make_shared<bool>(true)), subscriberId(0)
+	exampleSubscriber() : isAlive(std::make_shared<bool>(true)), subscriberId(courier::SubscriberId::NOT_SET)
 	{
 		subscriberId = courier::get().addSubscriber(to(example::Topic::ExampleTopic), courier::Subscriber(isAlive, [](const courier::Message& msg) {
 
@@ -55,7 +55,7 @@ struct exampleSubscriber
 	~exampleSubscriber()
 	{
 		courier::get().removeSubscriber(from(example::Topic::ExampleTopic), subscriberId);
-		subscriberId = 0;
+		subscriberId = courier::SubscriberId::NOT_SET;
 	}
 
 };

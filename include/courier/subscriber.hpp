@@ -1,4 +1,5 @@
 #pragma once
+#include <courier/subscriberId.hpp>
 
 #include <courier/message.hpp>
 
@@ -6,6 +7,7 @@
 
 namespace courier
 {
+
 	class Subscriber
 	{
 	public:
@@ -36,9 +38,10 @@ namespace courier
 
 
 		bool operator < (const Subscriber& other) const;
+		bool operator > (const Subscriber& other) const;
 		bool operator ==(const Subscriber& other) const;
 
-		size_t id;
+		SubscriberId id;
 	private:
 
 		std::function<void(const courier::Message&)> m_ptr;

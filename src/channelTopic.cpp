@@ -10,7 +10,7 @@ namespace courier
 		channels.insert({ channel->getId(), channel });
 	}
 
-	bool ChannelTopic::removeChannel(const size_t channelId)
+	bool ChannelTopic::removeChannel(const ChannelId channelId)
 	{
 		return channels.erase(channelId) == 1;
 	}
@@ -24,15 +24,11 @@ namespace courier
 		size_t count = Channel::sendMessage(message);
 		if (mMultithreadedEnabled)
 		{
-#ifdef _WIN32
-			int index;
-#else
-			size_t index;
-#endif
-			#pragma omp parallel for
-			for(index = 0; index < channels.size();  index++)
+			//TODO: can we parallel for a map, or do we have to change to vector...?			
+			//#pragma omp parallel for
+			for(auto it = channels.begin(); it != channels.end();  it++)
 			{
-				count += channels[index]->sendMessage(message);
+				count += it->second->sendMessage(message);
 			}
 		}
 		else
@@ -45,7 +41,7 @@ namespace courier
 		return count;
 	}
 
-	size_t ChannelTopic::sendMessage(const size_t subscriberId, const courier::Message& message)
+	size_t ChannelTopic::sendMessage(const SubscriberId subscriberId, const courier::Message& message)
 	{
 		if (validate(message) == false)
 		{
@@ -55,7 +51,7 @@ namespace courier
 	}
 
 
-	size_t ChannelTopic::sendMessageCh(const size_t channelId, const courier::Message& message)
+	size_t ChannelTopic::sendMessage(const ChannelId channelId, const courier::Message& message)
 	{
 		if (validate(message) == false)
 		{
@@ -72,7 +68,7 @@ namespace courier
 		return 0;
 	}
 
-	size_t ChannelTopic::sendMessage(const size_t channelId, const size_t subscriberId, const courier::Message& message)
+	size_t ChannelTopic::sendMessage(const ChannelId channelId, const SubscriberId subscriberId, const courier::Message& message)
 	{
 		if (validate(message) == false)
 		{

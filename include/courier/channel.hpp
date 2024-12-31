@@ -1,9 +1,9 @@
 #pragma once
-
-#include <vector>
+#include <courier/channelId.hpp>
 
 #include <courier/message.hpp>
 #include <courier/subscriber.hpp>
+#include <vector>
 
 
 namespace courier
@@ -17,15 +17,15 @@ namespace courier
 
 		virtual ~Channel();
 		virtual size_t sendMessage(const Message& message);
-		virtual size_t sendMessage(const size_t subscriberId, const Message& message);
+		virtual size_t sendMessage(const SubscriberId subscriberId, const Message& message);
 		
-		size_t addSubscriber(const Subscriber& subscriber);
-		void removeSubscriber(const size_t subscriberId);
+		SubscriberId addSubscriber(const Subscriber& subscriber);
+		void removeSubscriber(const SubscriberId subscriberId);
 
-		size_t getId() const;
+		ChannelId getId() const;
 
 		size_t getSubscribersCount() const;
-		void scheduleRemoval(const size_t subscriberId);
+		void scheduleRemoval(const SubscriberId subscriberId);
 
 		void handleScheduledRemovals();
 
@@ -35,9 +35,9 @@ namespace courier
 
 		bool mMultithreadedEnabled;
 		std::vector<Subscriber> subscribers;
-		std::vector<size_t> scheduledRemovals;
+		std::vector<SubscriberId> scheduledRemovals;
 	private:
-		size_t id;
+		ChannelId id;
 	};
 
 }

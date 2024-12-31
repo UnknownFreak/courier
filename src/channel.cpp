@@ -15,7 +15,7 @@ namespace courier
 	{
 	}
 
-	Channel::Channel(const size_t reserveSize) : mMultithreadedEnabled(true), id(g_channelId++)
+	Channel::Channel(const size_t reserveSize) : mMultithreadedEnabled(true), id((ChannelId)g_channelId++)
 	{
 		subscribers.reserve(reserveSize);
 	}
@@ -27,7 +27,7 @@ namespace courier
 			warning("Dangling subscribers on destruction");
 			for (auto& sub : subscribers)
 			{
-				warning(std::to_string(sub.id));
+				warning(std::to_string((size_t)sub.id));
 			}
 		}
 	}
@@ -57,7 +57,7 @@ namespace courier
 		//*/
 	}
 
-	size_t Channel::sendMessage(const size_t subscriberId, const Message& message)
+	size_t Channel::sendMessage(const SubscriberId subscriberId, const Message& message)
 	{
 		//*
 		Subscriber tmp;
@@ -76,7 +76,7 @@ namespace courier
 		//*/
 	}
 
-	size_t Channel::addSubscriber(const Subscriber& subscriber)
+	SubscriberId Channel::addSubscriber(const Subscriber& subscriber)
 	{
 		if (std::binary_search(subscribers.begin(), subscribers.end(), subscriber) == false)
 		{
@@ -85,7 +85,7 @@ namespace courier
 		return subscriber.id;
 	}
 
-	void Channel::removeSubscriber(const size_t subscriberId)
+	void Channel::removeSubscriber(const SubscriberId subscriberId)
 	{
 		Subscriber tmp;
 		tmp.id = subscriberId;
@@ -96,7 +96,7 @@ namespace courier
 		}
 	}
 
-	size_t Channel::getId() const
+	ChannelId Channel::getId() const
 	{
 		return id;
 	}
@@ -106,7 +106,7 @@ namespace courier
 		return subscribers.size();
 	}
 
-	void Channel::scheduleRemoval(const size_t subscriberId)
+	void Channel::scheduleRemoval(const SubscriberId subscriberId)
 	{
 		scheduledRemovals.push_back(subscriberId);
 	}
@@ -125,7 +125,7 @@ namespace courier
 			}
 			else
 			{
-				std::sort(scheduledRemovals.begin(), scheduledRemovals.end(), std::greater<size_t>());
+				std::sort(scheduledRemovals.begin(), scheduledRemovals.end(), std::greater<SubscriberId>());
 				auto it = subscribers.rbegin();
 				auto eit = subscribers.rbegin();
 				for (auto i : scheduledRemovals)
@@ -152,7 +152,7 @@ namespace courier
 				}
 				if (scheduledRemovals.size() > 0)
 				{
-					size_t _id = eit->id;
+					SubscriberId _id = eit->id;
 					while (subscribers.back().id != _id)
 					{
 						subscribers.pop_back();
