@@ -121,6 +121,5 @@ int main()
 	}
 	courier::shutdown();
 	courier::clearLogger();
-	system("pause");
 
 }
