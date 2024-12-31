@@ -54,12 +54,10 @@ namespace courier
 			}
 		}
 		return subscribers.size();
-		//*/
 	}
 
 	size_t Channel::sendMessage(const SubscriberId subscriberId, const Message& message)
 	{
-		//*
 		Subscriber tmp;
 		tmp.id = subscriberId;
 		auto it = std::lower_bound(subscribers.begin(), subscribers.end(), tmp);
@@ -73,7 +71,6 @@ namespace courier
 			warning("Trying to send message to a subscriber that does not exist.");
 		}
 		return 0;
-		//*/
 	}
 
 	SubscriberId Channel::addSubscriber(const Subscriber& subscriber)
@@ -167,5 +164,15 @@ namespace courier
 	void Channel::setMultiThreaded(const bool bEnabled)
 	{
 		mMultithreadedEnabled = bEnabled;
+	}
+
+	void Channel::setChannelName(const std::string& inChannelName)
+	{
+		channelName = inChannelName;
+	}
+
+	const std::string& Channel::getChannelName() const
+	{
+		return channelName;
 	}
 }

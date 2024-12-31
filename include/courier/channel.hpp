@@ -31,6 +31,9 @@ namespace courier
 
 		void setMultiThreaded(const bool bEnabled);
 
+		void setChannelName(const std::string& channelName);
+		const std::string& getChannelName() const;
+
 	protected:
 
 		bool mMultithreadedEnabled;
@@ -38,6 +41,7 @@ namespace courier
 		std::vector<SubscriberId> scheduledRemovals;
 	private:
 		ChannelId id;
+		std::string channelName;
 	};
 
 }
