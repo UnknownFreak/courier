@@ -8,7 +8,7 @@
 
 namespace courier
 {
-	class ChannelTopic : public Channel
+	class MultiChannel : public Channel
 	{
 	public:
 

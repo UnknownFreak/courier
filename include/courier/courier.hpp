@@ -6,7 +6,7 @@
 #include <courier/message.hpp>
 #include <courier/scheduledMessage.hpp>
 #include <courier/channel.hpp>
-#include <courier/channelTopic.hpp>
+#include <courier/multiChannel.hpp>
 #include <courier/subscriber.hpp>
 #include <courier/topic.hpp>
 
@@ -84,7 +84,7 @@ namespace courier
 		void removeSubscriber(const Topic topic, SubscriberId subscriberId);
 
 		void createChannel(const Topic topic);
-		std::shared_ptr<ChannelTopic> getChannel(const Topic topic);
+		std::shared_ptr <MultiChannel> getChannel(const Topic topic);
 
 		Courier& operator=(const Courier) = delete;
 
@@ -100,7 +100,7 @@ namespace courier
 		size_t m_messages = 0;
 		std::mutex mtx;
 
-		std::map<Topic, std::shared_ptr<ChannelTopic>> channels;
+		std::map<Topic, std::shared_ptr<MultiChannel>> channels;
 		std::map<Topic, std::vector<internal::ScheduledMessage>> scheduledMessages;
 
 	};

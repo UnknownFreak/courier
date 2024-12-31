@@ -1,21 +1,21 @@
-#include <courier/channelTopic.hpp>
+#include <courier/multiChannel.hpp>
 #include <courier/logger.hpp>
 
 #include <omp.h>
 
 namespace courier
 {
-	void ChannelTopic::addChannel(std::shared_ptr<Channel> channel)
+	void MultiChannel::addChannel(std::shared_ptr<Channel> channel)
 	{
 		channels.insert({ channel->getId(), channel });
 	}
 
-	bool ChannelTopic::removeChannel(const ChannelId channelId)
+	bool MultiChannel::removeChannel(const ChannelId channelId)
 	{
 		return channels.erase(channelId) == 1;
 	}
 
-	size_t ChannelTopic::sendMessage(const courier::Message& message)
+	size_t MultiChannel::sendMessage(const courier::Message& message)
 	{
 		if (validate(message) == false)
 		{
@@ -41,7 +41,7 @@ namespace courier
 		return count;
 	}
 
-	size_t ChannelTopic::sendMessage(const SubscriberId subscriberId, const courier::Message& message)
+	size_t MultiChannel::sendMessage(const SubscriberId subscriberId, const courier::Message& message)
 	{
 		if (validate(message) == false)
 		{
@@ -51,7 +51,7 @@ namespace courier
 	}
 
 
-	size_t ChannelTopic::sendMessage(const ChannelId channelId, const courier::Message& message)
+	size_t MultiChannel::sendMessage(const ChannelId channelId, const courier::Message& message)
 	{
 		if (validate(message) == false)
 		{
@@ -68,7 +68,7 @@ namespace courier
 		return 0;
 	}
 
-	size_t ChannelTopic::sendMessage(const ChannelId channelId, const SubscriberId subscriberId, const courier::Message& message)
+	size_t MultiChannel::sendMessage(const ChannelId channelId, const SubscriberId subscriberId, const courier::Message& message)
 	{
 		if (validate(message) == false)
 		{
@@ -85,18 +85,18 @@ namespace courier
 		return 0;
 	}
 
-	void ChannelTopic::setMessageValidator(std::shared_ptr<MessageValidator> messageValidator)
+	void MultiChannel::setMessageValidator(std::shared_ptr<MessageValidator> messageValidator)
 	{
 		validator = messageValidator;
 	}
 
-	std::shared_ptr<MessageValidator> ChannelTopic::getValidator() const
+	std::shared_ptr<MessageValidator> MultiChannel::getValidator() const
 	{
 		return validator;
 	}
 
 
-	bool ChannelTopic::validate(const courier::Message& message) const
+	bool MultiChannel::validate(const courier::Message& message) const
 	{
 		if (validator)
 		{
