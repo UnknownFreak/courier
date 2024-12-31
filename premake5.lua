@@ -20,7 +20,11 @@ workspace "courier"
 		defines {"NDEBUG" }
 		optimize "On"
 
+	filter "action:vs20*"
+		fatalwarnings { "5204" }
+
 	filter "action:gmake"
+		enablewarnings { "non-virtual-dtor" }
 		linkoptions { "-fopenmp" }
 
 

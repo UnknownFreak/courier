@@ -9,7 +9,7 @@ namespace courier
 	class Logger
 	{
 	public:
-		~Logger() = default;
+		virtual ~Logger() = default;
 		virtual void info(const std::string_view) = 0;
 		virtual void warning(const std::string_view) = 0;
 		virtual void error(const std::string_view) = 0;
