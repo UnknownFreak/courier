@@ -37,13 +37,9 @@ struct exampleSubscriber
 
 	exampleSubscriber() : isAlive(std::make_shared<bool>(true)), subscriberId(courier::SubscriberId::NOT_SET), counter(0)
 	{
-		subscriberId = courier::get().addSubscriber(to(example::Topic::ExampleTopic), courier::Subscriber(isAlive, [&](const courier::Message& ) {
-				counter++;
-			}
-		));
 	}
 
-	exampleSubscriber(exampleSubscriber&& mv) noexcept : subscriberId(courier::SubscriberId::NOT_SET), counter(0)
+	exampleSubscriber(exampleSubscriber&& mv) noexcept : isAlive(nullptr), subscriberId(courier::SubscriberId::NOT_SET), counter(0)
 	{
 		isAlive = std::move(mv.isAlive);
 		std::swap(mv.subscriberId, subscriberId);
@@ -57,6 +53,14 @@ struct exampleSubscriber
 			courier::get().scheduleRemoval(from(example::Topic::ExampleTopic), subscriberId);
 			subscriberId = courier::SubscriberId::NOT_SET;
 		}
+	}
+
+	void addSub()
+	{
+		subscriberId = courier::get().addSubscriber(to(example::Topic::ExampleTopic), courier::Subscriber(isAlive, [&](const courier::Message& ) {
+			counter++;
+		}
+		));
 	}
 
 };
@@ -88,6 +92,11 @@ void setup(size_t number)
 	{
 		vec.emplace_back(exampleSubscriber{});
 	}
+	// temporary fix
+	for(auto& e : vec)
+	{
+		e.addSub();
+	}
 }
 
 void clear()
@@ -99,11 +108,16 @@ void clear()
 void run(std::chrono::seconds dur)
 {
 	auto& courier = courier::get();
-	auto now = std::chrono::high_resolution_clock::now();
-	auto finish = now + dur;
-	while (std::chrono::high_resolution_clock::now() < finish)
+	auto start = std::chrono::high_resolution_clock::now();
+
+	while (1)
 	{
 		courier.post(to(example::Topic::ExampleTopic), courier::Message(example::MessageType::IntMessage, 1));
+
+		auto end = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::milli> elapsed = end - start;
+		if(elapsed >= dur)
+			break;
 	}
 }
 
@@ -126,7 +140,6 @@ int main()
 	courier.createChannel(withTopic(example::Topic::ExampleTopic));
 
 	courier.getChannel(withTopic(example::Topic::ExampleTopic))->setMessageValidator(validator);
-
 	using namespace std::chrono_literals;
 
 	std::cout << "test with openmp" << std::endl;
@@ -137,7 +150,7 @@ int main()
 		bench(500000, 5s);
 	}
 	std::cout << std::endl;
-	
+
 #ifdef _WIN32
 
 	courier.getChannel(withTopic(example::Topic::ExampleTopic))->useOpenMp(false);
