@@ -3,6 +3,8 @@
 
 #include <courier/message.hpp>
 #include <courier/subscriber.hpp>
+
+#include <string>
 #include <vector>
 
 
