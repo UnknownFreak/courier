@@ -13,7 +13,7 @@ Generate project with either premake.bat for windows or premake.sh for linux
 ## linux
 ```
 	make -jX # where X is number of parallel jobs.
-	make config=release # to build release
+	make
 	./bin/debug/example
 ```
 
@@ -49,7 +49,7 @@ Generate the project files, and manually add the references to the project.
 Premake5
 
 ## linux
-g++ 13.1 or later for std::format
+g++ 14.2.0 or later
 
 ## windows
 vs 2022 or later
