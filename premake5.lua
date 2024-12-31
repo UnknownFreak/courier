@@ -2,7 +2,7 @@
 workspace "courier"
 	configurations { "debug", "release" }
 
-	startproject "example"
+	startproject "bench"
 
 	warnings "Extra"
 	
@@ -57,3 +57,12 @@ project "example"
 	links { "courier" }
 	files { "example/**.cpp" }
 
+project "bench"
+	kind "consoleApp"
+	
+	targetdir "bin/%{cfg.buildcfg}"
+
+	includedirs { "include" }
+
+	links { "courier" }
+	files { "bench/**.cpp" }
