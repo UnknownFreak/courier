@@ -122,41 +122,7 @@ namespace courier
 			}
 			else
 			{
-				std::sort(scheduledRemovals.begin(), scheduledRemovals.end(), std::greater<SubscriberId>());
-				auto it = subscribers.rbegin();
-				auto eit = subscribers.rbegin();
-				for (auto i : scheduledRemovals)
-				{
-					while (it != subscribers.rend())
-					{
-						if (it->id == i)
-						{
-							if (it == eit)
-							{
-								//its already at last place
-								eit++;
-								break;
-							}
-							std::iter_swap(it, eit);
-							eit++;
-							break;
-						}
-						else
-						{
-							it++;
-						}
-					}
-				}
-				if (scheduledRemovals.size() > 0)
-				{
-					SubscriberId _id = eit->id;
-					while (subscribers.back().id != _id)
-					{
-						subscribers.pop_back();
-					}
-					std::sort(subscribers.begin(), subscribers.end());
-				}
-				scheduledRemovals.clear();
+				util::vectorFastRemove<Subscriber, SubscriberId>(subscribers, scheduledRemovals);
 			}
 		}
 	}
