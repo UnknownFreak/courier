@@ -108,4 +108,6 @@ namespace courier
 	void init();
 	void shutdown();
 	Courier& get();
+
+	const std::string getVersion();
 }

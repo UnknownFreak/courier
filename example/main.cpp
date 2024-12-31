@@ -92,6 +92,8 @@ struct courierLogger : public courier::Logger
 
 int main()
 {
+	std::cout << "Courier version: " << courier::getVersion() << std::endl;
+
 	courier::init();
 	courier::setLogger(std::make_shared<courierLogger>());
 	auto& courier = courier::get();

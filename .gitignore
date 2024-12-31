@@ -44,3 +44,6 @@ obj/
 # makefile
 Makefile
 *.make
+
+# ignore version auto generated file
+version.cpp

@@ -24,6 +24,22 @@ workspace "courier"
 		linkoptions { "-fopenmp" }
 
 
+result, errorCode = os.outputof("git describe --tags --always --dirty=-d")
+s = string.format(
+[[
+#include <courier/courier.hpp>
+#include <string>
+
+namespace courier
+{
+    const std::string getVersion()
+    {
+        return "%s";
+    }
+}
+]], result)
+io.writefile("src/version.cpp", s)
+
 include "courier.lua"
 	
 		
