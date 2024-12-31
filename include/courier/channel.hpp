@@ -20,7 +20,7 @@ namespace courier
 		virtual ~Channel();
 		virtual size_t sendMessage(const Message& message);
 		virtual size_t sendMessage(const SubscriberId subscriberId, const Message& message);
-		
+
 		SubscriberId addSubscriber(const Subscriber& subscriber);
 		void removeSubscriber(const SubscriberId subscriberId);
 
@@ -33,12 +33,19 @@ namespace courier
 
 		void setMultiThreaded(const bool bEnabled);
 
+		/// <summary>
+		/// This option is only available on windows, openMp is enabled by default
+		/// </summary>
+		/// <param name="bEnabled"></param>
+		void useOpenMp(const bool bEnabled);
+
 		void setChannelName(const std::string& channelName);
 		const std::string& getChannelName() const;
 
 	protected:
 
 		bool mMultithreadedEnabled;
+		bool mUseOpenMp;
 		std::vector<Subscriber> subscribers;
 		std::vector<SubscriberId> scheduledRemovals;
 	private:

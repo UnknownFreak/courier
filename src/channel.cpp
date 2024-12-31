@@ -1,11 +1,15 @@
 #include <courier/channel.hpp>
 #include <courier/logger.hpp>
+#include <courier/util.hpp>
 
+#ifdef _WIN32
+#include <ppl.h>
+#endif
+
+#include <omp.h>
 #include <algorithm>
 #include <memory>
 #include <string>
-
-#include <omp.h>
 
 namespace courier
 {
@@ -15,7 +19,7 @@ namespace courier
 	{
 	}
 
-	Channel::Channel(const size_t reserveSize) : mMultithreadedEnabled(true), id((ChannelId)g_channelId++)
+	Channel::Channel(const size_t reserveSize) : mMultithreadedEnabled(true), mUseOpenMp(true), id((ChannelId)g_channelId++)
 	{
 		subscribers.reserve(reserveSize);
 	}
@@ -36,15 +40,32 @@ namespace courier
 		if (mMultithreadedEnabled)
 		{
 #ifdef _WIN32
-			int index;
+			if (mUseOpenMp)
+			{
+				int index;
+				#pragma omp parallel for
+				for (index = 0; index < subscribers.size(); index++)
+				{
+					subscribers[index].sendMessage(message);
+				}
+			}
+			else
+			{
+				concurrency::parallel_for((size_t)0, subscribers.size(),
+					[&](size_t index)
+					{
+						subscribers[index].sendMessage(message);
+					});
+			}
 #else
 			size_t index;
-#endif
-			#pragma omp parallel for
-			for (index = 0 ; index < subscribers.size(); index++)
+#pragma omp parallel for
+			for (index = 0; index < subscribers.size(); index++)
 			{
 				subscribers[index].sendMessage(message);
 			}
+#endif
+
 		}
 		else
 		{
@@ -130,6 +151,11 @@ namespace courier
 	void Channel::setMultiThreaded(const bool bEnabled)
 	{
 		mMultithreadedEnabled = bEnabled;
+	}
+
+	void Channel::useOpenMp(const bool bEnabled)
+	{
+		mUseOpenMp = bEnabled;
 	}
 
 	void Channel::setChannelName(const std::string& inChannelName)
