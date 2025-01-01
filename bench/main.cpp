@@ -28,6 +28,7 @@ constexpr auto to = convert;
 constexpr auto withTopic = convert;
 constexpr auto from = convert;
 
+
 struct exampleSubscriber
 {
 	// isAlive makes sure the subscriber target callback is valid before executing
@@ -37,13 +38,16 @@ struct exampleSubscriber
 
 	exampleSubscriber() : isAlive(std::make_shared<bool>(true)), subscriberId(courier::SubscriberId::NOT_SET), counter(0)
 	{
+		addSub();
 	}
 
-	exampleSubscriber(exampleSubscriber&& mv) noexcept : isAlive(nullptr), subscriberId(courier::SubscriberId::NOT_SET), counter(0)
+	void addSub()
 	{
-		isAlive = std::move(mv.isAlive);
-		std::swap(mv.subscriberId, subscriberId);
-		std::swap(mv.counter, counter);
+		auto& courier = courier::get();
+		subscriberId = courier.addSubscriber(to(example::Topic::ExampleTopic), courier::Subscriber(isAlive, [&](const courier::Message& ) {
+			counter++;
+		}
+		));
 	}
 
 	~exampleSubscriber()
@@ -55,13 +59,6 @@ struct exampleSubscriber
 		}
 	}
 
-	void addSub()
-	{
-		subscriberId = courier::get().addSubscriber(to(example::Topic::ExampleTopic), courier::Subscriber(isAlive, [&](const courier::Message& ) {
-			counter++;
-		}
-		));
-	}
 
 };
 
@@ -90,12 +87,7 @@ void setup(size_t number)
 {
 	for (size_t i = 0; i < number; i++)
 	{
-		vec.emplace_back(exampleSubscriber{});
-	}
-	// temporary fix
-	for(auto& e : vec)
-	{
-		e.addSub();
+		vec.emplace_back();
 	}
 }
 
