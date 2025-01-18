@@ -158,12 +158,12 @@ namespace courier
 		mUseOpenMp = bEnabled;
 	}
 
-	void Channel::setChannelName(const std::string& inChannelName)
+	void Channel::setChannelName(std::string_view inChannelName)
 	{
 		channelName = inChannelName;
 	}
 
-	const std::string& Channel::getChannelName() const
+	std::string_view Channel::getChannelName() const
 	{
 		return channelName;
 	}

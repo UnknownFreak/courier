@@ -5,6 +5,7 @@
 #include <courier/subscriber.hpp>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 
@@ -39,8 +40,8 @@ namespace courier
 		/// <param name="bEnabled"></param>
 		void useOpenMp(const bool bEnabled);
 
-		void setChannelName(const std::string& channelName);
-		const std::string& getChannelName() const;
+		void setChannelName(std::string_view channelName);
+		std::string_view getChannelName() const;
 
 	protected:
 
