@@ -34,11 +34,9 @@ namespace courier
 					{
 						int index;
 						#pragma omp parallel for
+						for (index = 0; index < objects.size(); index++)
 						{
-							for (index = 0; index < objects.size(); index++)
-							{
-								func(objects[index], message);
-							}
+							func(objects[index], message);
 						}
 					}
 					else
@@ -81,11 +79,9 @@ namespace courier
 						{
 							int index;
 							#pragma omp parallel for
+							for (index = 0; index < objects.size(); index++)
 							{
-								for (index = 0; index < objects.size(); index++)
-								{
-									cb(objects[index], message);
-								}
+								cb(objects[index], message);
 							}
 						}
 						else

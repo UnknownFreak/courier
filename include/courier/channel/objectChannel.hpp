@@ -14,6 +14,7 @@
 
 #include <omp.h>
 
+
 namespace courier::concepts
 {
 	template<class T, class U>
@@ -42,11 +43,9 @@ namespace courier
 					{
 						int index;
 						#pragma omp parallel for
+						for (index = 0; index < objects.size(); index++)
 						{
-							for (index = 0; index < objects.size(); index++)
-							{
-								cb(objects[index], message);
-							}
+							cb(objects[index], message);
 						}
 					}
 					else

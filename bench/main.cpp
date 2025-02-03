@@ -110,7 +110,6 @@ void bench2(size_t numSubscribers, std::chrono::seconds dur, bool openmp=true, s
 
 	courier::ObjectChannel<exampleSubscriber> oc;
 
-	oc.setMultiThreaded(false);
 	oc.useOpenMp(openmp);
 	auto ex = setup(oc, numSubscribers);
 	
@@ -188,37 +187,35 @@ int main()
 	courier::init();
 	using namespace std::chrono_literals;
 
-	{
-		//std::cout << "run #" << i << std::endl;
-		std::cout << "test rewrite forwardfunc with multithreading = openmp" << std::endl;
-		bench3(500000, 10s);
-		std::cout << std::endl;
-	}
 
 	{
 		//std::cout << "run #" << i << std::endl;
 		std::cout << "test rewrite forwardfunc with multithreading = ppl" << std::endl;
-		bench3(500000, 10s, false);
-		std::cout << std::endl;
-	}
-
-	{
-		//std::cout << "run #" << i << std::endl;
-		std::cout << "test rewrite with multithreading = openmp" << std::endl;
-		bench2(500000, 10s);
+		bench3(500000, 5s, false);
 		std::cout << std::endl;
 	}
 
 	{
 		//std::cout << "run #" << i << std::endl;
 		std::cout << "test rewrite with multithreading = ppl" << std::endl;
-		bench2(500000, 10s, false);
+		bench2(500000, 5s, false);
+		std::cout << std::endl;
+	}
+
+	{
+		//std::cout << "run #" << i << std::endl;
+		std::cout << "test rewrite with multithreading = openmp" << std::endl;
+		bench2(500000, 5s);
+		std::cout << std::endl;
+	}
+
+	{
+		//std::cout << "run #" << i << std::endl;
+		std::cout << "test rewrite forwardfunc with multithreading = openmp" << std::endl;
+		bench3(500000, 5s);
 		std::cout << std::endl;
 	}
 	std::cout << std::endl;
 
 	courier::shutdown();
-
-	system("pause");
-
 }

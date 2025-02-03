@@ -43,7 +43,7 @@ static size_t g_subId = 0;
 struct exampleSubscriber : public courier::Subscriber
 {
 
-	exampleSubscriber() : Subscriber(courier::SubscriberId{g_subId++})
+	exampleSubscriber() : Subscriber((courier::SubscriberId)g_subId++)
 	{
 	}
 

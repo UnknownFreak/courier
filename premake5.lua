@@ -56,6 +56,7 @@ project "example"
 
 	links { "courier" }
 	files { "example/**.cpp" }
+	openmp "On"
 
 project "bench"
 	kind "consoleApp"
@@ -66,3 +67,4 @@ project "bench"
 
 	links { "courier" }
 	files { "bench/**.cpp" }
+	openmp "On"
