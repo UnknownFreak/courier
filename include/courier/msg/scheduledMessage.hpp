@@ -1,5 +1,7 @@
-#include <courier/message.hpp>
-#include <courier/subscriberId.hpp>
+#pragma once
+
+#include <courier/msg/message.hpp>
+#include <courier/subscriber.hpp>
 #include <courier/channelId.hpp>
 
 namespace courier::internal

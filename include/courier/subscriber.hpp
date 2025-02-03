@@ -1,50 +1,33 @@
 #pragma once
-#include <courier/subscriberId.hpp>
-
-#include <courier/message.hpp>
-
-#include <functional>
 
 namespace courier
 {
+	enum class SubscriberId : size_t { NOT_SET };
 
 	class Subscriber
 	{
 	public:
 
 		Subscriber();
+		Subscriber(const SubscriberId id);
+		~Subscriber() = default;
 
-		Subscriber(const std::weak_ptr<bool>& isAlive, const std::function<void(const courier::Message&)>& function);
+		Subscriber(const Subscriber&) = default;
+		Subscriber(Subscriber&&) = default;
 
-		Subscriber(const Subscriber& sub);
+		inline Subscriber& operator=(const Subscriber& other) = default;
 
-		void sendMessage(const courier::Message& message);
+		inline bool operator==(const Subscriber& other) const { return id == other.id; }
+		inline bool operator<(const Subscriber& other) const { return (size_t)id < (size_t)other.id; }
 
-		Subscriber(Subscriber&& other) noexcept
-			: id(std::move(other.id))
-			, m_ptr(std::move(other.m_ptr))
-			, m_isAlive(std::move(other.m_isAlive))
+		SubscriberId getId() const
 		{
+			return id;
 		}
 
-		Subscriber& operator=(const Subscriber& other);
-		Subscriber& operator=(Subscriber&& other)
-		{
-			id = std::move(other.id);
-			m_ptr = std::move(other.m_ptr);
-			m_isAlive = std::move(other.m_isAlive);
-			return *this;
-		}
-
-
-		bool operator < (const Subscriber& other) const;
-		bool operator > (const Subscriber& other) const;
-		bool operator ==(const Subscriber& other) const;
-
-		SubscriberId id;
 	private:
 
-		std::function<void(const courier::Message&)> m_ptr;
-		std::weak_ptr<bool> m_isAlive;
+		SubscriberId id;
+
 	};
 }

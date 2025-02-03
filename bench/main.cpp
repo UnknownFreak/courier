@@ -2,6 +2,9 @@
 #include <courier/courier.hpp>
 #include <iostream>
 
+#include <courier/channel/objectChannel.hpp>
+#include <courier/channel/objectChannel_fwdFunc.hpp>
+
 namespace example
 {
 
@@ -28,134 +31,194 @@ constexpr auto to = convert;
 constexpr auto withTopic = convert;
 constexpr auto from = convert;
 
+size_t g_id = 0;
 
-struct exampleSubscriber
+struct exampleSubscriber : public courier::Subscriber
 {
 	// isAlive makes sure the subscriber target callback is valid before executing
-	std::shared_ptr<bool> isAlive;
-	courier::SubscriberId subscriberId;
 	int counter;
 
-	exampleSubscriber() : isAlive(std::make_shared<bool>(true)), subscriberId(courier::SubscriberId::NOT_SET), counter(0)
+	exampleSubscriber() : Subscriber((courier::SubscriberId)g_id++), counter(0)
 	{
-		addSub();
 	}
 
-	void addSub()
-	{
-		auto& courier = courier::get();
-		subscriberId = courier.addSubscriber(to(example::Topic::ExampleTopic), courier::Subscriber(isAlive, [&](const courier::Message& ) {
-			counter++;
-		}
-		));
+	~exampleSubscriber() = default;
+
+
+	void onMessage(int) {
+		counter++;
 	}
 
-	~exampleSubscriber()
-	{
-		if (subscriberId != courier::SubscriberId::NOT_SET)
+};
+
+exampleSubscriber* setup(auto& oc, size_t number)
+{
+	exampleSubscriber* p = nullptr;
+	oc.setTopicCallback(to(example::Topic::ExampleTopic), [](exampleSubscriber& e, const courier::Message& msg)
 		{
-			courier::get().scheduleRemoval(from(example::Topic::ExampleTopic), subscriberId);
-			subscriberId = courier::SubscriberId::NOT_SET;
-		}
-	}
-
-
-};
-
-// Validate a message before it sent to all subscribers, if the validation fails, the message is not sent
-struct MyCustomMessageValidator : public courier::MessageValidator
-{
-	size_t messageCount = 0;
-	// Inherited via MessageValidator
-	bool validate(const courier::Message& ) override
-	{
-		messageCount++;
-		return true;
-	}
-
-	void clearMessageCounts()
-	{
-		messageCount = 0;
-	}
-};
-
-
-std::vector<exampleSubscriber> vec;
-auto validator = std::make_shared<MyCustomMessageValidator>();
-
-void setup(size_t number)
-{
+			auto i = msg.get<int>();
+			e.onMessage(i);
+		});
 	for (size_t i = 0; i < number; i++)
 	{
-		vec.emplace_back();
+		p = &oc.emplace_back();
 	}
+	return p;
 }
 
-void clear()
+void run2(auto& oc, std::chrono::seconds dur)
 {
-	vec.clear();
-	courier::get().handleScheduledRemovals();
-}
-
-void run(std::chrono::seconds dur)
-{
-	auto& courier = courier::get();
 	auto start = std::chrono::high_resolution_clock::now();
 
 	while (1)
 	{
-		courier.post(to(example::Topic::ExampleTopic), courier::Message(example::MessageType::IntMessage, 1));
+		oc.onMessage(to(example::Topic::ExampleTopic), courier::Message(example::MessageType::IntMessage, 1));
 
 		auto end = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double, std::milli> elapsed = end - start;
-		if(elapsed >= dur)
+		if (elapsed >= dur)
 			break;
 	}
 }
 
-void bench(size_t numSubscribers, std::chrono::seconds dur)
+struct msgStat
 {
-	std::cout << "Benching courier with " << numSubscribers <<" subscribers for " << dur.count() << " seconds" << std::endl;
-	setup(numSubscribers);
-	run(dur);
-	std::cout << "Message count during " << dur.count() << "s was: " << validator->messageCount / dur.count() << " messages/s" << std::endl;
-	validator->clearMessageCounts();
-	clear();
+	long long dur = 0;
+	long long msgcount = 999999999999;
+	long long avgCount = 0;
+
+	void set(long long d, long long msgC)
+	{
+		dur = d;
+		msgcount = msgC;
+		avgCount = msgcount / dur;
+	}
+
+	void add(long long d, long long msgC)
+	{
+		dur += d;
+		msgcount += msgC;
+		avgCount = msgcount / dur;
+	}
+};
+
+void bench2(size_t numSubscribers, std::chrono::seconds dur, bool openmp=true, size_t times=4)
+{
+	msgStat min{ 0,999999999999,0 };
+	msgStat max{ 0,0,0 };
+	msgStat avg{ 0,0,0 };
+
+	courier::ObjectChannel<exampleSubscriber> oc;
+
+	oc.setMultiThreaded(false);
+	oc.useOpenMp(openmp);
+	auto ex = setup(oc, numSubscribers);
+	
+	std::cout << "Benching courier " << times << " times with " << numSubscribers << " subscribers for " << dur.count() << " seconds" << std::endl;
+	for (size_t i = 0; i < times; i++)
+	{
+		run2(oc, dur);
+
+		if (ex->counter < min.msgcount)
+		{
+			min.set(dur.count(), ex->counter);
+		}
+
+		if (ex->counter > max.msgcount)
+		{
+			max.set(dur.count(), ex->counter);
+		}
+
+		avg.add(dur.count(), ex->counter);
+
+		ex->counter = 0;
+	}
+
+	std::cout << "Test results: " << std::endl;
+	std::cout << "Max: " << max.msgcount << " msg/s: " << max.avgCount << std::endl;
+	std::cout << "Min: " << min.msgcount << " msg/s: " << min.avgCount << std::endl;
+	std::cout << "Avg: " << avg.msgcount << " msg/s: " << avg.avgCount << std::endl;
+}
+
+
+
+template<class T>
+using test = courier::ObjectChannelFFunc < T, decltype([](T& t, const courier::Message& msg) { t.onMessage(msg.get<int>()); }) >;
+
+void bench3(size_t numSubscribers, std::chrono::seconds dur, bool openmp = true, size_t times=4)
+{
+	msgStat min{ 0,999999999999,0 };
+	msgStat max{ 0,0,0 };
+	msgStat avg{ 0,0,0 };
+
+	auto oc = test < exampleSubscriber>(to(example::Topic::ExampleTopic));
+
+	oc.useOpenMp(openmp);
+	auto ex = setup(oc, numSubscribers);
+
+	std::cout << "Benching courier " << times << " times with " << numSubscribers << " subscribers for " << dur.count() << " seconds" << std::endl;
+	for (size_t i = 0; i < times; i++)
+	{
+		run2(oc, dur);
+
+		if (ex->counter < min.msgcount)
+		{
+			min.set(dur.count(), ex->counter);
+		}
+
+		if (ex->counter > max.msgcount)
+		{
+			max.set(dur.count(), ex->counter);
+		}
+
+		avg.add(dur.count(), ex->counter);
+
+		ex->counter = 0;
+	}
+
+	std::cout << "Test results: " << std::endl;
+	std::cout << "Max: " << max.msgcount << " msg/s: " << max.avgCount << std::endl;
+	std::cout << "Min: " << min.msgcount << " msg/s: " << min.avgCount << std::endl;
+	std::cout << "Avg: " << avg.msgcount << " msg/s: " << avg.avgCount << std::endl;
 }
 
 int main()
 {
 	std::cout << "Courier version: " << courier::getVersion() << std::endl;
-	vec.reserve(500000);
 	courier::init();
-	auto& courier = courier::get();
-	courier.createChannel(withTopic(example::Topic::ExampleTopic));
-
-	courier.getChannel(withTopic(example::Topic::ExampleTopic))->setMessageValidator(validator);
 	using namespace std::chrono_literals;
 
-	std::cout << "test with openmp" << std::endl;
 	{
-		bench(10000, 1s);
-		bench(100000, 1s);
-		bench(500000, 1s);
-		bench(500000, 5s);
+		//std::cout << "run #" << i << std::endl;
+		std::cout << "test rewrite forwardfunc with multithreading = openmp" << std::endl;
+		bench3(500000, 10s);
+		std::cout << std::endl;
+	}
+
+	{
+		//std::cout << "run #" << i << std::endl;
+		std::cout << "test rewrite forwardfunc with multithreading = ppl" << std::endl;
+		bench3(500000, 10s, false);
+		std::cout << std::endl;
+	}
+
+	{
+		//std::cout << "run #" << i << std::endl;
+		std::cout << "test rewrite with multithreading = openmp" << std::endl;
+		bench2(500000, 10s);
+		std::cout << std::endl;
+	}
+
+	{
+		//std::cout << "run #" << i << std::endl;
+		std::cout << "test rewrite with multithreading = ppl" << std::endl;
+		bench2(500000, 10s, false);
+		std::cout << std::endl;
 	}
 	std::cout << std::endl;
 
-#ifdef _WIN32
-
-	courier.getChannel(withTopic(example::Topic::ExampleTopic))->useOpenMp(false);
-	std::cout << "test with ppl" << std::endl;
-	{
-		bench(10000, 1s);
-		bench(100000, 1s);
-		bench(500000, 1s);
-		bench(500000, 5s);
-	}
+	courier::shutdown();
 
 	system("pause");
-#endif
-	courier::shutdown();
 
 }

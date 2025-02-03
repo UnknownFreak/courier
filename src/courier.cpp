@@ -9,53 +9,43 @@ namespace courier
 {
 	void Courier::post(const Topic topic, const Message& message)
 	{
-
-		if (channels.find(topic) != channels.end())
+		for (auto& channel : channels)
 		{
-			m_messages += channels[topic]->sendMessage(message);
-		}
-		else
-		{
-			warning("Trying to post a message to a topic that has no registererd channel.");
+			if(channel->validate(topic, message))
+				channel->onMessage(topic, message);
 		}
 	}
 
 	void Courier::post(const Topic topic, const SubscriberId subscriber, const Message& message)
 	{
-		if (channels.find(topic) != channels.end())
+		for (auto& channel : channels)
 		{
-			m_messages += channels[topic]->sendMessage(subscriber, message);
-		}
-		else
-		{
-			warning("Trying to post a message to a topic that has no registererd channel.");
+			if (channel->validate(topic, message))
+				channel->onMessage(topic, subscriber, message);
 		}
 	}
 
-	void Courier::post(const Topic topic, const ChannelId channel, const Message& message)
+	void Courier::post(const Topic topic, const ChannelId channelId, const Message& message)
 	{
-		if (channels.find(topic) != channels.end())
+		for (auto& channel : channels)
 		{
-			m_messages += channels[topic]->sendMessage(channel, message);
-		}
-		else
-		{
-			warning("Trying to post a message to a topic that has no registererd channel.");
+			if (channel->getId() == channelId)
+			{
+				if (channel->validate(topic, message))
+					channel->onMessage(topic, message);
+			}
 		}
 	}
 
-	void Courier::post(const Topic topic, const ChannelId channel, const SubscriberId subscriber, const Message& message)
+	void Courier::post(const Topic topic, const ChannelId channelId, const SubscriberId subscriber, const Message& message)
 	{
-		if (channels.find(topic) != channels.end())
+		for (auto& channel : channels)
 		{
-			if(subscriber == SubscriberId::NOT_SET)
-				m_messages += channels[topic]->sendMessage(channel, message);
-			else
-				m_messages += channels[topic]->sendMessage(channel, subscriber, message);
-		}
-		else
-		{
-			warning("Trying to post a message to a topic that has no registererd channel.");
+			if (channel->getId() == channelId)
+			{
+				if (channel->validate(topic, message))
+					channel->onMessage(topic, subscriber, message);
+			}
 		}
 	}
 	void Courier::schedule(const Topic topic, const Message& message)
@@ -99,48 +89,23 @@ namespace courier
 		mtx.unlock();
 	}
 
-	SubscriberId Courier::addSubscriber(const Topic topic, const Subscriber& subscriber)
+	void Courier::addChannel(std::shared_ptr<AbstractChannel> channel)
 	{
-		if (channels.find(topic) == channels.end())
-		{
-			info("Trying to add a subscriber to a topic that has no registered channel.");
-			info("Creating channel automatically.");
-			createChannel(topic);
-		}
-		return channels[topic]->addSubscriber(subscriber);
+
+		channels.push_back(channel);
 	}
 
-	void Courier::removeSubscriber(const Topic topic, SubscriberId subscriberId)
+	bool Courier::removeChannel(const ChannelId channelId)
 	{
-		if (channels.find(topic) != channels.end())
+		for (auto it = channels.begin(); it != channels.end(); it++)
 		{
-			channels[topic]->removeSubscriber(subscriberId);
+			if (it->get()->getId() == channelId)
+			{
+				channels.erase(it);
+				return true;
+			}
 		}
-		else
-		{
-			warning("Trying to remove a subscriber from a topic that has no registererd channel.");
-			warning(std::format("Topic = {}, subscriberId = {}", (size_t)topic, (size_t)subscriberId));
-		}
-	}
-
-	void Courier::createChannel(const Topic topic)
-	{
-		channels[topic] = std::make_shared<MultiChannel>();
-	}
-
-	std::shared_ptr<MultiChannel> Courier::getChannel(const Topic topic)
-	{
-		if (channels.find(topic) == channels.end())
-		{
-			createChannel(topic);
-		}
-		return channels[topic];
-	}
-
-
-	void Courier::scheduleRemoval(const Topic topic, const SubscriberId subscriberId)
-	{
-		channels[topic]->scheduleRemoval(subscriberId);
+		return false;
 	}
 
 	void Courier::handleScheduledMessages()
@@ -181,7 +146,7 @@ namespace courier
 	{
 		for (auto& channel : channels)
 		{
-			channel.second->handleScheduledRemovals();
+			channel->handleScheduledRemovals();
 		}
 	}
 

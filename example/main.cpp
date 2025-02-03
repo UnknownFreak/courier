@@ -1,7 +1,9 @@
+#include <iostream>
 
 #include <courier/courier.hpp>
 #include <courier/logger.hpp>
-#include <iostream>
+
+#include <courier/channel/objectChannel.hpp>
 
 namespace example
 {
@@ -19,6 +21,11 @@ namespace example
 
 }
 
+constexpr bool compare(courier::Topic t, example::Topic t2)
+{
+	return t == courier::Topic(t2);
+}
+
 constexpr courier::Topic convert(example::Topic t)
 {
 	return courier::Topic(t);
@@ -26,49 +33,44 @@ constexpr courier::Topic convert(example::Topic t)
 
 //syntax sugaring with naming
 
+constexpr auto is = compare;
 constexpr auto to = convert;
 constexpr auto withTopic = convert;
 constexpr auto from = convert;
 
-struct exampleSubscriber
+static size_t g_subId = 0;
+
+struct exampleSubscriber : public courier::Subscriber
 {
-	// isAlive makes sure the subscriber target callback is valid before executing
-	std::shared_ptr<bool> isAlive;
-	courier::SubscriberId subscriberId;
 
-	exampleSubscriber() : isAlive(std::make_shared<bool>(true)), subscriberId(courier::SubscriberId::NOT_SET)
+	exampleSubscriber() : Subscriber(courier::SubscriberId{g_subId++})
 	{
-		subscriberId = courier::get().addSubscriber(to(example::Topic::ExampleTopic), courier::Subscriber(isAlive, [](const courier::Message& msg) {
-
-			if (msg.is(example::MessageType::FloatType))
-			{
-				std::cout << "Hello from subscriber: floatVal = " << msg.get<float>() << "\n";
-			}
-			else if (msg.is(example::MessageType::StringType))
-			{
-				std::cout << "Hello from subscriber: stringVal = " << msg.get<std::string>() << "\n";
-			}
-			}
-		));
 	}
 
-	~exampleSubscriber()
+	void onStringReceived(std::string& str)
 	{
-		courier::get().removeSubscriber(from(example::Topic::ExampleTopic), subscriberId);
-		subscriberId = courier::SubscriberId::NOT_SET;
+		std::cout << "Hello from subscriber: stringVal = " << str << "\n";
 	}
 
+	void onFloatReceived(const float flt)
+	{
+		std::cout << "Hello from subscriber: floatVal = " << flt << "\n";
+	}
+	using Subscriber::operator<;
 };
 
 // Validate a message before it sent to all subscribers, if the validation fails, the message is not sent
 struct MyCustomMessageValidator : public courier::MessageValidator
 {
 	// Inherited via MessageValidator
-	bool validate(const courier::Message& message) override
+	bool validate(const courier::Topic topic, const courier::Message& message) override
 	{
-		if(message.is(example::MessageType::StringType))
-			return false;
-		return true;
+		if (compare(topic, example::Topic::ExampleTopic))
+		{
+			if (message.is(example::MessageType::StringType) == false)
+				return true;
+		}
+		return false;
 	}
 };
 
@@ -97,15 +99,33 @@ int main()
 	courier::init();
 	courier::setLogger(std::make_shared<courierLogger>());
 	auto& courier = courier::get();
-	courier.createChannel(withTopic(example::Topic::ExampleTopic));
+
+	auto channel = std::make_shared<courier::ObjectChannel<exampleSubscriber>>();
+	channel->setTopicCallback(to(example::Topic::ExampleTopic), [](exampleSubscriber & sub, const courier::Message & msg) {
+		switch (msg.as<example::MessageType>())
+		{
+		case example::MessageType::FloatType:
+			sub.onFloatReceived(msg.get<const float>());
+		break;
+		case example::MessageType::StringType:
+		{
+			auto s = msg.get<std::string>();
+			sub.onStringReceived(s);
+			break;
+		}
+		default:
+			break;
+		}
+	});
+
+	courier.addChannel(channel);
 
 	// Message validator
 	// courier.getChannel(withTopic(example::Topic::ExampleTopic))->setMessageValidator(std::make_shared<MyCustomMessageValidator>());
 
 	{
+		exampleSubscriber& ex = channel->emplace_back();
 
-
-		exampleSubscriber ex;
 
 		// use std string implicitly to make sure the data is stored as std string and not anything else...
 		courier.schedule(to(example::Topic::ExampleTopic), courier::Message(example::MessageType::StringType, std::string("A delayed scheduled message!")));
@@ -117,6 +137,8 @@ int main()
 		}
 
 		courier.handleScheduledMessages();
+
+		channel->erase(ex.getId());
 
 	}
 	courier::shutdown();

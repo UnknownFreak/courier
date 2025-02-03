@@ -7,8 +7,8 @@
 namespace courier::util
 {
 
-	template<class U, class V>
-	void vectorFastRemove(std::vector<Subscriber>& containerToClear, std::vector<V>& referenceIds)
+	template<class V>
+	void vectorFastRemove(auto& containerToClear, std::vector<V>& referenceIds)
 	{
 		std::sort(referenceIds.begin(), referenceIds.end(), std::greater<V>());
 		auto it = containerToClear.rbegin();
@@ -17,7 +17,7 @@ namespace courier::util
 		{
 			while (it != containerToClear.rend())
 			{
-				if (it->id == i)
+				if (it->getId() == i)
 				{
 					if (it == eit)
 					{
@@ -39,8 +39,8 @@ namespace courier::util
 		{
 			if (eit == containerToClear.rend())
 				eit = containerToClear.rbegin();
-			V _id = eit->id;
-			while (containerToClear.back().id != _id)
+			V _id = eit->getId();
+			while (containerToClear.back().getId() != _id)
 			{
 				containerToClear.pop_back();
 			}

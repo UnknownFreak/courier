@@ -1,4 +1,4 @@
-#include <courier/message.hpp>
+#include <courier/msg/message.hpp>
 
 namespace courier
 {

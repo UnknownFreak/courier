@@ -1,14 +1,15 @@
 #pragma once
 
+#include <courier/channel/abstractChannel.hpp>
+
+#include <courier/msg/message.hpp>
+#include <courier/msg/scheduledMessage.hpp>
+
+#include <courier/topic.hpp>
+
 #include <map>
 #include <mutex>
-
-#include <courier/message.hpp>
-#include <courier/scheduledMessage.hpp>
-#include <courier/channel.hpp>
-#include <courier/multiChannel.hpp>
-#include <courier/subscriber.hpp>
-#include <courier/topic.hpp>
+#include <vector>
 
 namespace courier
 {
@@ -80,15 +81,11 @@ namespace courier
 		/// <param name="message">The message to schedule</param>
 		void schedule(const Topic topic, const ChannelId channel, const SubscriberId subscriberId, const Message& message);
 
-		SubscriberId addSubscriber(const Topic topic, const Subscriber& subscriber);
-		void removeSubscriber(const Topic topic, SubscriberId subscriberId);
-
-		void createChannel(const Topic topic);
-		std::shared_ptr <MultiChannel> getChannel(const Topic topic);
+		void addChannel(std::shared_ptr<AbstractChannel> channel);
+		bool removeChannel(const ChannelId channelId);
 
 		Courier& operator=(const Courier) = delete;
 
-		void scheduleRemoval(const Topic, const SubscriberId subscriberId);
 		void handleScheduledMessages();
 		void handleScheduledRemovals();
 
@@ -100,7 +97,7 @@ namespace courier
 		size_t m_messages = 0;
 		std::mutex mtx;
 
-		std::map<Topic, std::shared_ptr<MultiChannel>> channels;
+		std::vector<std::shared_ptr<AbstractChannel>> channels;
 		std::map<Topic, std::vector<internal::ScheduledMessage>> scheduledMessages;
 
 	};
