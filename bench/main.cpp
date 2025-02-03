@@ -188,6 +188,7 @@ int main()
 	using namespace std::chrono_literals;
 
 
+#ifdef _WIN32
 	{
 		//std::cout << "run #" << i << std::endl;
 		std::cout << "test rewrite forwardfunc with multithreading = ppl" << std::endl;
@@ -201,13 +202,7 @@ int main()
 		bench2(500000, 5s, false);
 		std::cout << std::endl;
 	}
-
-	{
-		//std::cout << "run #" << i << std::endl;
-		std::cout << "test rewrite with multithreading = openmp" << std::endl;
-		bench2(500000, 5s);
-		std::cout << std::endl;
-	}
+#endif
 
 	{
 		//std::cout << "run #" << i << std::endl;
@@ -215,6 +210,14 @@ int main()
 		bench3(500000, 5s);
 		std::cout << std::endl;
 	}
+	{
+		//std::cout << "run #" << i << std::endl;
+		std::cout << "test rewrite with multithreading = openmp" << std::endl;
+		bench2(500000, 5s);
+		std::cout << std::endl;
+	}
+
+
 	std::cout << std::endl;
 
 	courier::shutdown();
