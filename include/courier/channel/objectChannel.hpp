@@ -151,23 +151,5 @@ namespace courier
 		std::map<Topic, std::function<void(T&, const Message&)>> topicCallbacks;
 		std::vector<T> objects;
 		std::vector<SubscriberId> objectsToErase;
-
-		template<typename T, typename U>
-		struct CompressedPair
-		{
-			[[no_unique_address]] T first;
-			[[no_unique_address]] U second;
-
-			CompressedPair(T f) : first(f) {}
-			CompressedPair(U s) : second(s) {}
-			CompressedPair(T f, U s) : first(f), second(s) {}
-
-		};
-
-		template<typename T, auto Fn>
-		using fun = CompressedPair < T, decltype([](T x) { Fn(x); }) > ;
-
-		void func(int x) { std::cout << x << std::endl; }
-
 	};
 }

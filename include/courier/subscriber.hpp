@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 namespace courier
 {
 	enum class SubscriberId { NOT_SET };
