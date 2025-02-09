@@ -90,8 +90,8 @@ namespace courier
 		void handleScheduledRemovals();
 
 		size_t messageCount();
-		size_t getScheduledMessageCount(const Topic topic) const;
-		size_t getScheduledMessageCount() const;
+		size_t getScheduledMessageCount(const Topic topic);
+		size_t getScheduledMessageCount();
 	private:
 
 		size_t m_messages = 0;

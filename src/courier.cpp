@@ -110,8 +110,10 @@ namespace courier
 
 	void Courier::handleScheduledMessages()
 	{
+		mtx.lock();
 		auto scheduledMessagesCopy = scheduledMessages;
 		scheduledMessages.clear();
+		mtx.unlock();
 		for (auto& [topic, messages] : scheduledMessagesCopy)
 		{
 			for (auto& message : messages)
@@ -157,22 +159,28 @@ namespace courier
 		return tmp;
 	}
 
-	size_t Courier::getScheduledMessageCount(const Topic topic) const
+	size_t Courier::getScheduledMessageCount(const Topic topic)
 	{
+		size_t sizeVal = 0;
+		mtx.lock();
 		if (scheduledMessages.count(topic) != 0)
 		{
-			return scheduledMessages.at(topic).size();
+			sizeVal = scheduledMessages[topic].size();
 		}
-		return 0;
+		mtx.unlock();
+		return sizeVal;
 	}
 
-	size_t Courier::getScheduledMessageCount() const
+	size_t Courier::getScheduledMessageCount()
 	{
 		size_t count = 0;
+		mtx.lock();
 		for (const auto& it : scheduledMessages)
 		{
 			count += it.second.size();
 		}
+		mtx.unlock();
+
 		return count;
 	}
 
