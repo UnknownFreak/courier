@@ -14,55 +14,50 @@
 
 #include <omp.h>
 
-
 namespace courier
 {
-	template<class T> requires concepts::getId<T, SubscriberId> && std::derived_from<T, Subscriber>
-	class ObjectChannel : public AbstractChannel
+	template<class T, typename Fn> requires concepts::getId<T, SubscriberId> && std::derived_from<T, Subscriber>
+	class ObjectChannelFFuncSwitch : public AbstractChannel
 	{
 	public:
+
 		void onMessage(const Topic messageTopic, const Message& message) override
 		{
-			if (topicCallbacks.find(messageTopic) != topicCallbacks.end())
+			if (isMultiThreadedEnabled)
 			{
-				auto& cb = topicCallbacks[messageTopic];
-
-				if (isMultiThreadedEnabled)
+#ifdef _WIN32
+				if (isOpenMpUsed)
 				{
-	#ifdef _WIN32
-					if (isOpenMpUsed)
-					{
-						int index;
-						#pragma omp parallel for
-						for (index = 0; index < objects.size(); index++)
-						{
-							cb(objects[index], message);
-						}
-					}
-					else
-					{
-						concurrency::parallel_for((size_t)0, objects.size(),
-							[&](size_t index)
-							{
-								cb(objects[index], message);
-							});
-					}
-	#else
-					size_t index;
+					int index;
 					#pragma omp parallel for
 					for (index = 0; index < objects.size(); index++)
 					{
-						cb(objects[index], message);
+						func(messageTopic, objects[index], message);
 					}
-	#endif
-
 				}
 				else
 				{
-					for (auto& o : objects)
-					{
-						cb(o, message);
-					}
+					concurrency::parallel_for((size_t)0, objects.size(),
+						[&](size_t index)
+						{
+							func(messageTopic, objects[index], message);
+						});
+				}
+#else
+				size_t index;
+				#pragma omp parallel for
+				for (index = 0; index < objects.size(); index++)
+				{
+					func(messageTopic, objects[index], message);
+				}
+#endif
+
+			}
+			else
+			{
+				for (auto& o : objects)
+				{
+					func(messageTopic, o, message);
 				}
 			}
 		}
@@ -70,11 +65,7 @@ namespace courier
 		void onMessage(const Topic messageTopic, const SubscriberId id, const Message& message) override
 		{
 			T* object = findObject(id);
-			if (object != nullptr && topicCallbacks.find(messageTopic) != topicCallbacks.end())
-			{
-				auto& cb = topicCallbacks[messageTopic];
-				cb(*object, message);
-			}
+			func(messageTopic, *object, message);
 		}
 
 
@@ -119,11 +110,6 @@ namespace courier
 			std::copy(idsToErase.begin(), idsToErase.end(), std::back_inserter(objectsToErase));
 		}
 
-		void setTopicCallback(Topic topic, std::function<void(T&,const Message&)> func)
-		{
-			topicCallbacks[topic] = func;
-		}
-
 	private:
 
 		T* findObject(SubscriberId id)
@@ -138,8 +124,12 @@ namespace courier
 			return nullptr;
 		}
 
-		std::map<Topic, std::function<void(T&, const Message&)>> topicCallbacks;
 		std::vector<T> objects;
 		std::vector<SubscriberId> objectsToErase;
-	};
+
+		[[no_unique_address]] Fn func;
+	public:
+
+		ObjectChannelFFuncSwitch() = default;
+};
 }

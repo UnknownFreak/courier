@@ -49,3 +49,12 @@ namespace courier::util
 		referenceIds.clear();
 	}
 }
+
+namespace courier::concepts
+{
+	template<class T, class U>
+	concept getId = requires (T t)
+	{
+		{ t.getId() } -> std::same_as<U>;
+	};
+}
