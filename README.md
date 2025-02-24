@@ -14,7 +14,7 @@ Generate project with either premake.bat for windows or premake.sh for linux
 ```
 	make -jX # where X is number of parallel jobs.
 	make
-	./bin/debug/example
+	./bin/debug/sample
 ```
 
 # including in your project
@@ -32,8 +32,11 @@ project "myproject"
 	
 	includedirs { "path_to_courier_root/include" }
 	links { "courier" }
+	openmp "On"
 
 ```
+Note that openmp is "on" when building the project that uses the courier library, since the channel templates will fail to build without it
+
 
 in order to link properly when making linux applications add the following line to the workspace or to the application project(s)
 ```
@@ -49,7 +52,7 @@ Generate the project files, and manually add the references to the project.
 Premake5
 
 ## linux
-g++ 14.2.0 or later
+gcc version that supports c++20 or later
 
 ## windows
-vs 2022 or later
+msvc compiler that supports c++20 or later
