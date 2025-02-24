@@ -12,7 +12,7 @@ namespace courier
 
 		Subscriber();
 		Subscriber(const SubscriberId id);
-		~Subscriber() = default;
+		virtual ~Subscriber() = default;
 
 		Subscriber(const Subscriber&) = default;
 		Subscriber(Subscriber&&) = default;

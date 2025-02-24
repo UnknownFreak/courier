@@ -2,7 +2,7 @@
 workspace "courier"
 	configurations { "debug", "release" }
 
-	startproject "bench"
+	startproject "sample"
 
 	warnings "Extra"
 	
@@ -47,7 +47,7 @@ io.writefile("src/version.cpp", s)
 include "courier.lua"
 	
 		
-project "example"
+project "sample"
 	kind "consoleApp"
 	
 	targetdir "bin/%{cfg.buildcfg}"
@@ -55,16 +55,5 @@ project "example"
 	includedirs { "include" }
 
 	links { "courier" }
-	files { "example/**.cpp" }
-	openmp "On"
-
-project "bench"
-	kind "consoleApp"
-	
-	targetdir "bin/%{cfg.buildcfg}"
-
-	includedirs { "include" }
-
-	links { "courier" }
-	files { "bench/**.cpp" }
+	files { "sample/**.cpp", "sample/**.hpp" }
 	openmp "On"

@@ -3,10 +3,28 @@
 
 #include <format>
 
+#include <omp.h>
+
 courier::Courier* g_courier = nullptr;
 
 namespace courier
 {
+
+	Courier::Courier(const Settings& in_settings) : settings(in_settings)
+	{
+		static int maxThreads = omp_get_max_threads();
+
+		if (settings.threadSettings == courier::ThreadingSettings::Fixed)
+		{
+			int numThreads = maxThreads;
+			if (settings.numThreads < maxThreads)
+			{
+				numThreads = settings.numThreads;
+			}
+			omp_set_num_threads(numThreads);
+		}
+	}
+
 	void Courier::post(const Topic topic, const Message& message)
 	{
 		for (auto& channel : channels)
@@ -184,12 +202,12 @@ namespace courier
 		return count;
 	}
 
-	void init()
+	void init(const Settings& settings)
 	{
 		if (g_courier == nullptr)
 		{
 			info("Initializing Courier");
-			g_courier = new Courier();
+			g_courier = new Courier(settings);
 		}
 		else
 		{

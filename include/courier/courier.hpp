@@ -1,5 +1,6 @@
 #pragma once
 
+#include <courier/settings.hpp>
 #include <courier/channel/abstractChannel.hpp>
 
 #include <courier/msg/message.hpp>
@@ -16,6 +17,9 @@ namespace courier
 	class Courier
 	{
 	public:
+
+		explicit Courier(const Settings& settings);
+		Courier& operator=(const Courier) = delete;
 
 		/// <summary>
 		/// Post a message to all subscribers on a topic
@@ -84,8 +88,6 @@ namespace courier
 		void addChannel(std::shared_ptr<AbstractChannel> channel);
 		bool removeChannel(const ChannelId channelId);
 
-		Courier& operator=(const Courier) = delete;
-
 		void handleScheduledMessages();
 		void handleScheduledRemovals();
 
@@ -95,6 +97,7 @@ namespace courier
 	private:
 
 		size_t m_messages = 0;
+		const Settings settings;
 		std::mutex mtx;
 
 		std::vector<std::shared_ptr<AbstractChannel>> channels;
@@ -102,7 +105,7 @@ namespace courier
 
 	};
 
-	void init();
+	void init(const Settings& in_settings);
 	void shutdown();
 	Courier& get();
 
