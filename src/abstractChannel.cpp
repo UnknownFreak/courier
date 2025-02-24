@@ -6,7 +6,6 @@ namespace courier
 
 	AbstractChannel::AbstractChannel()
 		: isMultiThreadedEnabled(true)
-		, isOpenMpUsed(true)
 		, validator(nullptr)
 		, channelId((ChannelId)g_channelId++)
 		, channelName("")
@@ -16,11 +15,6 @@ namespace courier
 	void AbstractChannel::setMultiThreaded(const bool bEnableMultiThreading)
 	{
 		isMultiThreadedEnabled = bEnableMultiThreading;
-	}
-
-	void AbstractChannel::useOpenMp(const bool bUseOpenMp)
-	{
-		isOpenMpUsed = bUseOpenMp;
 	}
 
 	ChannelId AbstractChannel::getId() const

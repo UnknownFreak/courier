@@ -8,10 +8,6 @@
 #include <vector>
 #include <functional>
 
-#ifdef _WIN32
-#include <ppl.h>
-#endif
-
 #include <omp.h>
 
 #include <courier/logger.hpp>
@@ -30,33 +26,15 @@ namespace courier
 				if (isMultiThreadedEnabled)
 				{
 #ifdef _WIN32
-					if (isOpenMpUsed)
-					{
-						int index;
-#pragma omp parallel for
-						{
-							for (index = 0; index < cb.size(); index++)
-							{
-								cb[index](message);
-							}
-						}
-					}
-					else
-					{
-						concurrency::parallel_for((size_t)0, cb.size(),
-							[&](size_t index)
-							{
-								cb[index](message);
-							});
-					}
+					int index;
 #else
 					size_t index;
-#pragma omp parallel for
+#endif
+					#pragma omp parallel for
 					for (index = 0; index < cb.size(); index++)
 					{
 						cb[index](message);
 					}
-#endif
 
 				}
 				else

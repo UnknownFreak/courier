@@ -43,11 +43,6 @@ namespace courier
 		void setMultiThreaded(const bool bEnableMultiThreading);
 
 		/// <summary>
-		/// This option is only available on windows, openMp is enabled by default.
-		/// </summary>
-		void useOpenMp(const bool bUseOpenMp);
-
-		/// <summary>
 		/// Gets the channel identifier associated with this channel.
 		/// </summary>
 		/// <returns>An unique identifier for this channel</returns>
@@ -91,7 +86,6 @@ namespace courier
 	protected:
 
 		bool isMultiThreadedEnabled;
-		bool isOpenMpUsed;
 
 	private:
 

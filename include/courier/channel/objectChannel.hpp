@@ -8,10 +8,6 @@
 #include <vector>
 #include <functional>
 
-#ifdef _WIN32
-#include <ppl.h>
-#endif
-
 #include <omp.h>
 
 namespace courier
@@ -26,33 +22,16 @@ namespace courier
 			if (isMultiThreadedEnabled)
 			{
 #ifdef _WIN32
-				if (isOpenMpUsed)
-				{
-			int index;
-			#pragma omp parallel for
-			for (index = 0; index < objects.size(); index++)
-			{
-				func(messageTopic, objects[index], message);
-			}
-				}
-				else
-				{
-					concurrency::parallel_for((size_t)0, objects.size(),
-						[&](size_t index)
-						{
-							func(messageTopic, objects[index], message);
-						});
-				}
+				int index;
 #else
 				size_t index;
+#endif
 				#pragma omp parallel for
 				for (index = 0; index < objects.size(); index++)
 				{
 					func(messageTopic, objects[index], message);
 				}
-#endif
-			
-		}
+			}
 			else
 			{
 				for (auto& o : objects)
