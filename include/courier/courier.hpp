@@ -1,7 +1,7 @@
 #pragma once
 
 #include <courier/settings.hpp>
-#include <courier/channel/abstractChannel.hpp>
+#include <courier/channel.hpp>
 
 #include <courier/msg/message.hpp>
 #include <courier/msg/scheduledMessage.hpp>
@@ -85,7 +85,7 @@ namespace courier
 		/// <param name="message">The message to schedule</param>
 		void schedule(const Topic topic, const ChannelId channel, const SubscriberId subscriberId, const Message& message);
 
-		void addChannel(std::shared_ptr<AbstractChannel> channel);
+		void addChannel(std::shared_ptr<Channel> channel);
 		bool removeChannel(const ChannelId channelId);
 
 		void handleScheduledMessages();
@@ -100,7 +100,7 @@ namespace courier
 		const Settings settings;
 		std::mutex mtx;
 
-		std::vector<std::shared_ptr<AbstractChannel>> channels;
+		std::vector<std::shared_ptr<Channel>> channels;
 		std::map<Topic, std::vector<internal::ScheduledMessage>> scheduledMessages;
 
 	};

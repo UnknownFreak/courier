@@ -1,6 +1,6 @@
 #pragma once
 
-#include <courier/channel/abstractChannel.hpp>
+#include <courier/channel.hpp>
 #include <courier/subscriber.hpp>
 #include <courier/util.hpp>
 
@@ -13,31 +13,21 @@
 namespace courier
 {
 	template<class T, typename Fn> requires concepts::getId<T, SubscriberId> && std::derived_from<T, Subscriber>
-	class ObjectChannel : public AbstractChannel
+	class ObjectChannel : public Channel
 	{
 	public:
 
 		void onMessage(const Topic messageTopic, const Message& message) override
 		{
-			if (isMultiThreadedEnabled)
-			{
 #ifdef _WIN32
-				int index;
+			int index;
 #else
-				size_t index;
+			size_t index;
 #endif
-				#pragma omp parallel for
-				for (index = 0; index < objects.size(); index++)
-				{
-					func(messageTopic, objects[index], message);
-				}
-			}
-			else
+			#pragma omp parallel for
+			for (index = 0; index < objects.size(); index++)
 			{
-				for (auto& o : objects)
-				{
-					func(messageTopic, o, message);
-				}
+				func(messageTopic, objects[index], message);
 			}
 		}
 

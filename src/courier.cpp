@@ -107,9 +107,8 @@ namespace courier
 		mtx.unlock();
 	}
 
-	void Courier::addChannel(std::shared_ptr<AbstractChannel> channel)
+	void Courier::addChannel(std::shared_ptr<Channel> channel)
 	{
-
 		channels.push_back(channel);
 	}
 

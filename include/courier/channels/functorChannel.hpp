@@ -1,6 +1,6 @@
 #pragma once
 
-#include <courier/channel/abstractChannel.hpp>
+#include <courier/channel.hpp>
 #include <courier/subscriber.hpp>
 #include <courier/util.hpp>
 
@@ -14,7 +14,7 @@
 
 namespace courier
 {
-	class FunctorChannel : public AbstractChannel
+	class FunctorChannel : public Channel
 	{
 	public:
 		void onMessage(const Topic messageTopic, const Message& message) override
@@ -23,26 +23,15 @@ namespace courier
 			{
 				auto& cb = topicCallbacks[messageTopic];
 
-				if (isMultiThreadedEnabled)
-				{
 #ifdef _WIN32
-					int index;
+				int index;
 #else
-					size_t index;
+				size_t index;
 #endif
-					#pragma omp parallel for
-					for (index = 0; index < cb.size(); index++)
-					{
-						cb[index](message);
-					}
-
-				}
-				else
+				#pragma omp parallel for
+				for (index = 0; index < cb.size(); index++)
 				{
-					for (auto& o : cb)
-					{
-						o(message);
-					}
+					cb[index](message);
 				}
 			}
 		}

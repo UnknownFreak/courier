@@ -6,7 +6,7 @@
 #include <courier/courier.hpp>
 #include <iostream>
 
-#include <courier/channel/objectChannel.hpp>
+#include <courier/channels/objectChannel.hpp>
 
 namespace bench
 {

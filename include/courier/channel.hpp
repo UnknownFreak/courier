@@ -11,7 +11,7 @@
 
 namespace courier
 {
-	class AbstractChannel
+	class Channel
 	{
 
 	public:
@@ -31,16 +31,11 @@ namespace courier
 
 		/// Other public methods definition
 
-		AbstractChannel();
-		virtual ~AbstractChannel() = default;
+		Channel();
+		virtual ~Channel() = default;
 
 		// prevent channels being copy assigned
-		AbstractChannel& operator=(const AbstractChannel&) = delete;
-
-		/// <summary>
-		/// Enable multi-threading for the channel if possible. Multi-threading is enabled by default.
-		/// </summary>
-		void setMultiThreaded(const bool bEnableMultiThreading);
+		Channel& operator=(const Channel&) = delete;
 
 		/// <summary>
 		/// Gets the channel identifier associated with this channel.
@@ -82,10 +77,6 @@ namespace courier
 		/// <param name="message">The message to validate</param>
 		/// <returns>True if the message was valid, false otherwise</returns>
 		bool validate(const Topic topic, const Message& message) const;
-
-	protected:
-
-		bool isMultiThreadedEnabled;
 
 	private:
 

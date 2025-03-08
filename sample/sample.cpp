@@ -5,7 +5,7 @@
 #include <courier/courier.hpp>
 #include <courier/logger.hpp>
 
-#include <courier/channel/objectChannel.hpp>
+#include <courier/channels/objectChannel.hpp>
 
 namespace sample
 {
