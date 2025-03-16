@@ -1,5 +1,6 @@
 
 #include "bench.hpp"
+#include "subscriber.hpp"
 
 #include <chrono>
 
@@ -36,7 +37,7 @@ namespace bench
 
 	size_t g_id = 0;
 
-	struct exampleSubscriber : public courier::Subscriber
+	struct exampleSubscriber : public Subscriber
 	{
 		// isAlive makes sure the subscriber target callback is valid before executing
 		int counter;

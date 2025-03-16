@@ -4,7 +4,7 @@
 #include <courier/channelId.hpp>
 #include <courier/msg/message.hpp>
 #include <courier/msg/messageValidator.hpp>
-#include <courier/subscriber.hpp>
+#include <courier/subscriberId.hpp>
 
 #include <string>
 #include <string_view>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <courier/channel.hpp>
-#include <courier/subscriber.hpp>
+#include <courier/subscriberId.hpp>
 #include <courier/util.hpp>
 
 #include <map>
@@ -12,7 +12,7 @@
 
 namespace courier
 {
-	template<class T, typename Fn> requires concepts::getId<T, SubscriberId> && std::derived_from<T, Subscriber>
+	template<class T, typename Fn> requires concepts::Subscriber<T, SubscriberId>
 	class ObjectChannel : public Channel
 	{
 	public:

@@ -52,9 +52,20 @@ namespace courier::util
 
 namespace courier::concepts
 {
+
+	template<class T>
+	concept lessThanComparable = requires (const std::remove_reference_t<T> & t1, const std::remove_reference_t<T> & t2)
+	{
+		{ t1 < t2 } -> std::_Boolean_testable;
+		{ t2 < t1 } -> std::_Boolean_testable;
+	};
+
 	template<class T, class U>
 	concept getId = requires (T t)
 	{
 		{ t.getId() } -> std::same_as<U>;
 	};
+
+	template <class T, class U>
+	concept Subscriber = std::equality_comparable<T> && lessThanComparable<T> && getId<T, U>;
 }

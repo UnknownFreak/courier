@@ -1,4 +1,5 @@
 #include "sample.hpp"
+#include "subscriber.hpp"
 
 #include <iostream>
 
@@ -47,7 +48,7 @@ namespace sample
 
 	static size_t g_subId = 0;
 
-	struct exampleSubscriber : public courier::Subscriber
+	struct exampleSubscriber : public Subscriber
 	{
 
 		exampleSubscriber() : Subscriber((courier::SubscriberId)g_subId++)
