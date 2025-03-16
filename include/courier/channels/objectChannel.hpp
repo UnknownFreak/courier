@@ -34,7 +34,10 @@ namespace courier
 		void onMessage(const Topic messageTopic, const SubscriberId id, const Message& message) override
 		{
 			T* object = findObject(id);
-			func(messageTopic, *object, message);
+			if (object)
+			{
+				func(messageTopic, *object, message);
+			}
 		}
 
 
