@@ -74,7 +74,6 @@ namespace sample
 		{
 			std::cout << "Hello from subscriber: floatVal = " << flt << "\n";
 		}
-		using Subscriber::operator<;
 	};
 
 	// Validate a message before it sent to all subscribers, if the validation fails, the message is not sent

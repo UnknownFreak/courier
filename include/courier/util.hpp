@@ -44,7 +44,7 @@ namespace courier::util
 			{
 				containerToClear.pop_back();
 			}
-			std::sort(containerToClear.begin(), containerToClear.end());
+			std::sort(containerToClear.begin(), containerToClear.end(), [](const auto& a, const auto& b) -> bool { return (size_t)a.getId() < (size_t)b.getId(); });
 		}
 		referenceIds.clear();
 	}
@@ -53,13 +53,6 @@ namespace courier::util
 namespace courier::concepts
 {
 
-	template<class T>
-	concept lessThanComparable = requires (const std::remove_reference_t<T> & t1, const std::remove_reference_t<T> & t2)
-	{
-		{ t1 < t2 } -> std::_Boolean_testable;
-		{ t2 < t1 } -> std::_Boolean_testable;
-	};
-
 	template<class T, class U>
 	concept getId = requires (T t)
 	{
@@ -67,5 +60,5 @@ namespace courier::concepts
 	};
 
 	template <class T, class U>
-	concept Subscriber = std::equality_comparable<T> && lessThanComparable<T> && getId<T, U>;
+	concept Subscriber = getId<T, U>;
 }

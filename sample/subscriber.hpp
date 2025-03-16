@@ -16,9 +16,6 @@ public:
 
 	inline Subscriber& operator=(const Subscriber& other) = default;
 
-	inline bool operator==(const Subscriber& other) const { return id == other.id; }
-	inline bool operator<(const Subscriber& other) const { return (size_t)id < (size_t)other.id; }
-
 	courier::SubscriberId getId() const
 	{
 		return id;
