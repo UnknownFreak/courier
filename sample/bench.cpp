@@ -37,18 +37,22 @@ namespace bench
 
 	size_t g_id = 0;
 
-	struct exampleSubscriber : public Subscriber
+	struct exampleSubscriber
 	{
 		// isAlive makes sure the subscriber target callback is valid before executing
+		courier::SubscriberId id;
+
 		int counter;
 		int counter2;
 		int bloat[20];
 
-		exampleSubscriber() : Subscriber((courier::SubscriberId)g_id++), counter(0), counter2(0), bloat{ 0 }
+		exampleSubscriber() : id((courier::SubscriberId)g_id++), counter(0), counter2(0), bloat{ 0 }
 		{
 		}
 
 		~exampleSubscriber() = default;
+
+		inline courier::SubscriberId getId() const { return id; }
 
 	};
 
