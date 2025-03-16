@@ -1,5 +1,4 @@
 #include "sample.hpp"
-#include "subscriber.hpp"
 
 #include <iostream>
 
@@ -48,18 +47,22 @@ namespace sample
 
 	static size_t g_subId = 0;
 
-	struct exampleSubscriber : public Subscriber
+	struct exampleSubscriber
 	{
 
-		exampleSubscriber() : Subscriber((courier::SubscriberId)g_subId++)
+		courier::SubscriberId id;
+
+		inline courier::SubscriberId getId() const { return id; }
+
+		exampleSubscriber() : id((courier::SubscriberId)g_subId++)
 		{
 		}
 
-		exampleSubscriber(const exampleSubscriber& other) : Subscriber(other) {}
+		exampleSubscriber(const exampleSubscriber& other) : id(other.id) {}
 
 		exampleSubscriber& operator=(const exampleSubscriber& other)
 		{
-			Subscriber::operator=(other);
+			id = other.id;
 			return *this;
 		}
 
