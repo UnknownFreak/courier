@@ -37,6 +37,12 @@
 *.vcxproj
 *.vcxproj.*
 
+# VSCode
+*.cache
+
+# clangd
+compile_commands.json
+
 # build folders
 bin/
 obj/
