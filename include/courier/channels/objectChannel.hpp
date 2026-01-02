@@ -4,11 +4,10 @@
 #include <courier/subscriberId.hpp>
 #include <courier/util.hpp>
 
-#include <map>
 #include <vector>
-#include <functional>
 
 #include <omp.h>
+
 
 namespace courier
 {
@@ -27,7 +26,7 @@ namespace courier
 			#pragma omp parallel for
 			for (index = 0; index < objects.size(); index++)
 			{
-				func(messageTopic, objects[index], message);
+				func(objects[index], messageTopic, message);
 			}
 		}
 
@@ -36,7 +35,7 @@ namespace courier
 			T* object = findObject(id);
 			if (object)
 			{
-				func(messageTopic, *object, message);
+				func(*object, messageTopic, message);
 			}
 		}
 
@@ -102,7 +101,7 @@ namespace courier
 		[[no_unique_address]] Fn func;
 	public:
 
-		ObjectChannel() = default;
+		ObjectChannel(std::string_view name) : Channel(name) {}
 	};
 	
 }

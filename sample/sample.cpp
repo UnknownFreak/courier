@@ -119,7 +119,7 @@ namespace sample
 		courier::setLogger(std::make_shared<sample::courierLogger>());
 		auto& courier = courier::get();
 
-		using ExampleChannel = courier::ObjectChannel < exampleSubscriber, decltype([](courier::Topic topic, exampleSubscriber& e, const courier::Message& msg)
+		using ExampleChannel = courier::ObjectChannel < exampleSubscriber, decltype([]( exampleSubscriber& e, courier::Topic topic,const courier::Message& msg)
 			{
 				switch (as<sample::Topic>(topic))
 				{
@@ -141,7 +141,7 @@ namespace sample
 				}
 			}) > ;
 
-		auto channel = std::make_shared<ExampleChannel>();
+		auto channel = std::make_shared<ExampleChannel>("exampleChannel");
 		courier.addChannel(channel);
 
 		// Message validator

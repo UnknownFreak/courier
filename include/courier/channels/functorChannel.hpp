@@ -1,7 +1,7 @@
 #pragma once
 
 #include <courier/channel.hpp>
-#include <courier/subscriber.hpp>
+#include <courier/subscriberId.hpp>
 #include <courier/util.hpp>
 
 #include <map>
@@ -44,7 +44,7 @@ namespace courier
 			info("onMessage(topic, id, message) not supported");
 		}
 
-		virtual void handleScheduledRemovals()
+		virtual void handleScheduledRemovals() override
 		{
 
 		}

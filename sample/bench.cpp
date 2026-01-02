@@ -1,5 +1,6 @@
 
 #include "bench.hpp"
+#include "courier/settings.hpp"
 
 #include <chrono>
 
@@ -36,7 +37,7 @@ namespace bench
 
 	size_t g_id = 0;
 
-	struct exampleSubscriber
+	struct /*__attribute__((__aligned__(64)))*/ exampleSubscriber
 	{
 		// isAlive makes sure the subscriber target callback is valid before executing
 		courier::SubscriberId id;
@@ -70,6 +71,8 @@ namespace bench
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 		int counter = 0;
+		//const char* const benchRun = "Bench Runner";
+		ZoneNamed(benchRun, true);
 		while (1)
 		{
 			oc.onMessage(to(::bench::Topic::ExampleTopic), courier::Message(::bench::MessageType::IntMessage, 1));
@@ -85,11 +88,12 @@ namespace bench
 			if (elapsed >= dur)
 				break;
 		}
+		FrameMark;
 	}
 
 
 	template<class T>
-	using test2 = courier::ObjectChannel < T, decltype([](courier::Topic topic, T& t, const courier::Message& msg) {
+	using test2 = courier::ObjectChannel < T, decltype([](T& t, courier::Topic topic,  const courier::Message& msg) {
 		switch ((size_t)topic) {
 		case (size_t)to(::bench::Topic::ExampleTopic):
 			t.counter += msg.get<int>();
@@ -108,7 +112,7 @@ namespace bench
 		msgStat max{ 0,0,0 };
 		msgStat avg{ 0,0,0 };
 
-		auto oc = test2<exampleSubscriber>();
+		auto oc = test2<exampleSubscriber>("exampleSubscriber");
 
 		auto ex = setup2(oc, numSubscribers);
 

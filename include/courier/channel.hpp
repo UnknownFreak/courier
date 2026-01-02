@@ -31,7 +31,7 @@ namespace courier
 
 		/// Other public methods definition
 
-		Channel();
+		Channel(std::string_view channelName);
 		virtual ~Channel() = default;
 
 		// prevent channels being copy assigned
@@ -83,6 +83,7 @@ namespace courier
 		std::shared_ptr<MessageValidator> validator;
 
 		ChannelId channelId;
+	protected:
 		std::string channelName;
 	};
 }

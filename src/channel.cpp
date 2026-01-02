@@ -4,10 +4,10 @@ namespace courier
 {
 	static size_t g_channelId = 1;
 
-	Channel::Channel()
+	Channel::Channel(std::string_view channelNameIn)
 		: validator(nullptr)
 		, channelId((ChannelId)g_channelId++)
-		, channelName("")
+		, channelName(channelNameIn)
 	{
 	}
 

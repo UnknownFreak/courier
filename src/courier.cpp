@@ -1,7 +1,6 @@
+#include "courier/settings.hpp"
 #include <courier/courier.hpp>
 #include <courier/logger.hpp>
-
-#include <format>
 
 #include <omp.h>
 

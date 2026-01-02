@@ -6,7 +6,7 @@ workspace "courier"
 
 	warnings "Extra"
 	
-	cppdialect "C++20"
+	cppdialect "C++23"
 	language "C++"
 	architecture "x64"
 	
