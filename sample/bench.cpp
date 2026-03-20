@@ -71,8 +71,6 @@ namespace bench
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 		int counter = 0;
-		//const char* const benchRun = "Bench Runner";
-		ZoneNamed(benchRun, true);
 		while (1)
 		{
 			oc.onMessage(to(::bench::Topic::ExampleTopic), courier::Message(::bench::MessageType::IntMessage, 1));
@@ -88,7 +86,6 @@ namespace bench
 			if (elapsed >= dur)
 				break;
 		}
-		FrameMark;
 	}
 
 
