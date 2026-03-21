@@ -1,41 +1,27 @@
 
 #include "bench.hpp"
-#include "courier/settings.hpp"
-
-#include <chrono>
 
 #include <courier/courier.hpp>
-#include <iostream>
+#include "courier/settings.hpp"
+#include <courier/messageHandler.hpp>
+#include <courier/subscriberId.hpp>
 
-#include <courier/channels/objectChannel.hpp>
+#include <iostream>
+#include <chrono>
+#include <omp.h>
+
 
 namespace bench
 {
 
-	enum class Topic
-	{
-		ExampleTopic,
-		ExampleTopic2,
-	};
 
-	enum class MessageType
-	{
-		IntMessage,
-	};
-
-
-	constexpr courier::Topic convert(Topic t)
-	{
-		return courier::Topic(t);
-	}
 
 	//syntax sugaring with naming
 
-	constexpr auto to = convert;
-	constexpr auto withTopic = convert;
-	constexpr auto from = convert;
-
 	size_t g_id = 0;
+	size_t g_id2 = 0;
+
+	struct customType {};
 
 	struct /*__attribute__((__aligned__(64)))*/ exampleSubscriber
 	{
@@ -44,9 +30,9 @@ namespace bench
 
 		int counter;
 		int counter2;
-		int bloat[20];
+		//int bloat[20];
 
-		exampleSubscriber() : id((courier::SubscriberId)g_id++), counter(0), counter2(0), bloat{ 0 }
+		exampleSubscriber() : id((courier::SubscriberId)g_id++), counter(0), counter2(0)//, bloat{ 0 }
 		{
 		}
 
@@ -56,8 +42,87 @@ namespace bench
 
 	};
 
+	struct /*__attribute__((__aligned__(64)))*/ exampleSubscriber2
+	{
+		// isAlive makes sure the subscriber target callback is valid before executing
+		courier::SubscriberId id;
 
-	exampleSubscriber* setup2(auto& oc, size_t number)
+		int counter;
+		int counter2;
+		float x=0,y=0,z=0;
+
+		exampleSubscriber2() : id((courier::SubscriberId)g_id2++), counter(0), counter2(0)
+		{
+		}
+
+		~exampleSubscriber2() = default;
+
+		inline courier::SubscriberId getId() const { return id; }
+
+	};
+
+};
+
+namespace courier
+{
+	template<>
+	void handleMessage<bench::exampleSubscriber, float>(std::vector<bench::exampleSubscriber>&, const float&)
+	{
+		static bool once = true;
+		if(once)
+		{
+			std::cout << "Float messages ignored for exampleSubscriber" << std::endl;
+			once = false;
+		}
+		return;
+	}
+
+	template<>
+	void handleObjectMessage(bench::exampleSubscriber& ex, const int &)
+	{
+		ex.counter++;
+	}
+
+	template<>
+	void handleObjectMessage(bench::exampleSubscriber& ex, const bench::customType &)
+	{
+		ex.counter2++;
+	}
+	
+	template<>
+	void handleObjectMessage(bench::exampleSubscriber2& ex, const int &)
+	{
+		ex.counter++;
+	}
+
+	template<>
+	void handleObjectMessage(bench::exampleSubscriber2& ex, const bench::customType &)
+	{
+		ex.counter2++;
+	}
+		
+	template<>
+	void handleObjectMessage(bench::exampleSubscriber2& , const float &)
+	{
+	}
+}
+
+namespace bench
+{
+	struct Collection
+	{
+		std::vector<exampleSubscriber> collection;
+		std::vector<exampleSubscriber2> collection2;
+
+		template<class Type>
+		void onMessage(const Type& message)
+		{
+			courier::handleMessage(collection, message);
+			courier::handleMessage(collection2, message);
+		}
+	};
+
+	exampleSubscriber* setup1(auto& oc, size_t number)
 	{
 		exampleSubscriber* p = nullptr;
 		for (size_t i = 0; i < number; i++)
@@ -67,18 +132,29 @@ namespace bench
 		return p;
 	}
 
-	void run2(auto& oc, std::chrono::seconds dur)
+	exampleSubscriber2* setup2(auto& oc, size_t number)
+	{
+		exampleSubscriber2* p = nullptr;
+		for (size_t i = 0; i < number; i++)
+		{
+			p = &oc.emplace_back();
+		}
+		return p;
+	}
+
+	void run2(courier::Courier<Collection>* oc, std::chrono::seconds dur)
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 		int counter = 0;
 		while (1)
 		{
-			oc.onMessage(to(::bench::Topic::ExampleTopic), courier::Message(::bench::MessageType::IntMessage, 1));
+			oc->post(1);
 			counter++;
 			if (counter == 10)
 			{
 				counter = 0;
-				oc.onMessage(to(::bench::Topic::ExampleTopic2), courier::Message(::bench::MessageType::IntMessage, 1));
+				oc->post(1.0f);
+				oc->post(customType{});
 
 			}
 			auto end = std::chrono::high_resolution_clock::now();
@@ -89,33 +165,19 @@ namespace bench
 	}
 
 
-	template<class T>
-	using test2 = courier::ObjectChannel < T, decltype([](T& t, courier::Topic topic,  const courier::Message& msg) {
-		switch ((size_t)topic) {
-		case (size_t)to(::bench::Topic::ExampleTopic):
-			t.counter += msg.get<int>();
-			break;
-		case (size_t)to(::bench::Topic::ExampleTopic2):
-			t.counter2 += msg.get<int>();
-			break;
-		default:
-			break;
-		}
-		}) > ;
-
-	void runBench(size_t numSubscribers, std::chrono::seconds dur, size_t times = 4)
+	void runBench(courier::Courier<Collection>* instance, size_t numSubscribers, std::chrono::seconds dur, size_t times = 4)
 	{
 		msgStat min{ 0,999999999999,0 };
 		msgStat max{ 0,0,0 };
 		msgStat avg{ 0,0,0 };
 
-		auto oc = test2<exampleSubscriber>("exampleSubscriber");
 
-		auto ex = setup2(oc, numSubscribers);
+		auto ex = setup1(instance->getCollection().collection, numSubscribers);
+		setup2(instance->getCollection().collection2, numSubscribers);
 
 		for (size_t i = 0; i < times; i++)
 		{
-			run2(oc, dur);
+			run2(instance, dur);
 
 			if (ex->counter < min.msgcount)
 			{
@@ -188,24 +250,27 @@ namespace bench
 				times = strtoull(input.c_str(), nullptr, 10);
 		}
 
-		
-		if (cores > 0)
 		{
-			courier::init(courier::Settings{ courier::ThreadingSettings::Fixed, cores });
-		}
-		else
-		{
-			courier::init(courier::Settings{ courier::ThreadingSettings::Auto });
-		}
-		{
-			std::cout << "Benching courier "<< times <<" times, using " << getCores(cores) << " with " << numItems << " subscribers for " << d.count() << " seconds" << std::endl;
+			courier::Courier<Collection>* instance;
+			if (cores > 0)
+			{
+				instance = new courier::Courier<Collection>(courier::Settings{ courier::ThreadingSettings::Fixed, cores });
+			}
+			else
+			{
+				instance = new courier::Courier<Collection>(courier::Settings{ courier::ThreadingSettings::Auto });
+			}
+			{
+				std::cout << "Benching courier "<< times <<" times, using " << getCores(cores) << " with " << numItems << " subscribers for " << d.count() << " seconds" << std::endl;
 
-			runBench(numItems, d, times);
+				runBench(instance, numItems, d, times);
+				std::cout << std::endl;
+			}
+
 			std::cout << std::endl;
+
+			delete instance;
 		}
 
-		std::cout << std::endl;
-
-		courier::shutdown();
 	}
 }

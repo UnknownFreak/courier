@@ -4,11 +4,11 @@
 
 #include <omp.h>
 
-courier::Courier* g_courier = nullptr;
+//courier::Courier* g_courier = nullptr;
 
 namespace courier
 {
-
+/*
 	Courier::Courier(const Settings& in_settings) : settings(in_settings)
 	{
 		static int maxThreads = omp_get_max_threads();
@@ -22,88 +22,6 @@ namespace courier
 			}
 			omp_set_num_threads(numThreads);
 		}
-	}
-
-	void Courier::post(const Topic topic, const Message& message)
-	{
-		for (auto& channel : channels)
-		{
-			if(channel->validate(topic, message))
-				channel->onMessage(topic, message);
-		}
-	}
-
-	void Courier::post(const Topic topic, const SubscriberId subscriber, const Message& message)
-	{
-		for (auto& channel : channels)
-		{
-			if (channel->validate(topic, message))
-				channel->onMessage(topic, subscriber, message);
-		}
-	}
-
-	void Courier::post(const Topic topic, const ChannelId channelId, const Message& message)
-	{
-		for (auto& channel : channels)
-		{
-			if (channel->getId() == channelId)
-			{
-				if (channel->validate(topic, message))
-					channel->onMessage(topic, message);
-			}
-		}
-	}
-
-	void Courier::post(const Topic topic, const ChannelId channelId, const SubscriberId subscriber, const Message& message)
-	{
-		for (auto& channel : channels)
-		{
-			if (channel->getId() == channelId)
-			{
-				if (channel->validate(topic, message))
-					channel->onMessage(topic, subscriber, message);
-			}
-		}
-	}
-	void Courier::schedule(const Topic topic, const Message& message)
-	{
-		mtx.lock();
-		{
-
-			scheduledMessages[topic].push_back(internal::ScheduledMessage{
-				false, false, ChannelId::NOT_SET, SubscriberId::NOT_SET, message
-			});
-		}
-		mtx.unlock();
-	}
-
-	void Courier::schedule(const Topic topic, const SubscriberId subscriberId, const Message& message)
-	{
-		mtx.lock();
-		{
-			scheduledMessages[topic].push_back(internal::ScheduledMessage{ false, true, ChannelId::NOT_SET, subscriberId, message });
-		}
-		mtx.unlock();
-	}
-
-	void Courier::schedule(const Topic topic, const ChannelId channel, const Message& message)
-	{
-		mtx.lock();
-		{
-			scheduledMessages[topic].push_back(internal::ScheduledMessage{ false, true, channel, SubscriberId::NOT_SET, message });
-		}
-		mtx.unlock();
-	}
-
-	void Courier::schedule(const Topic topic, const ChannelId channel, const SubscriberId subscriber, const Message& message)
-	{
-		mtx.lock();
-		{
-			scheduledMessages[topic].push_back(internal::ScheduledMessage{
-			true, true, channel, subscriber, message
-				});
-		}
-		mtx.unlock();
 	}
 
 	void Courier::addChannel(std::shared_ptr<Channel> channel)
@@ -130,33 +48,9 @@ namespace courier
 		auto scheduledMessagesCopy = scheduledMessages;
 		scheduledMessages.clear();
 		mtx.unlock();
-		for (auto& [topic, messages] : scheduledMessagesCopy)
+		for (auto func : scheduledMessagesCopy)
 		{
-			for (auto& message : messages)
-			{
-				if (message.sendToChannel == true)
-				{
-					if (message.sendToSubscriber)
-					{
-						post(topic, message.channel, message.subscriber, message.message);
-					}
-					else
-					{
-						post(topic, message.channel, message.message);
-					}
-				}
-				else
-				{
-					if (message.sendToSubscriber)
-					{
-						post(topic, message.subscriber, message.message);
-					}
-					else
-					{
-						post(topic, message.message);
-					}
-				}
-			}
+			func();
 		}
 	}
 
@@ -175,29 +69,9 @@ namespace courier
 		return tmp;
 	}
 
-	size_t Courier::getScheduledMessageCount(const Topic topic)
-	{
-		size_t sizeVal = 0;
-		mtx.lock();
-		if (scheduledMessages.count(topic) != 0)
-		{
-			sizeVal = scheduledMessages[topic].size();
-		}
-		mtx.unlock();
-		return sizeVal;
-	}
-
 	size_t Courier::getScheduledMessageCount()
 	{
-		size_t count = 0;
-		mtx.lock();
-		for (const auto& it : scheduledMessages)
-		{
-			count += it.second.size();
-		}
-		mtx.unlock();
-
-		return count;
+		return scheduledMessages.size();
 	}
 
 	void init(const Settings& settings)
@@ -223,4 +97,5 @@ namespace courier
 	{
 		return *g_courier;
 	}
+	*/
 }

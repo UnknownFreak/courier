@@ -5,11 +5,9 @@
 #include <courier/courier.hpp>
 #include <courier/logger.hpp>
 
-#include <courier/channels/objectChannel.hpp>
-
 namespace sample
 {
-
+/*
 	enum class Topic
 	{
 		ExampleTopic,
@@ -111,10 +109,10 @@ namespace sample
 			std::cout << "Error: " << v << std::endl;
 		}
 	};
-
+*/
 	void run()
 	{
-
+/*
 		courier::init(courier::Settings{ courier::ThreadingSettings::Auto });
 		courier::setLogger(std::make_shared<sample::courierLogger>());
 		auto& courier = courier::get();
@@ -169,6 +167,6 @@ namespace sample
 		}
 		courier::shutdown();
 		courier::clearLogger();
+*/
 	}
-
 }
