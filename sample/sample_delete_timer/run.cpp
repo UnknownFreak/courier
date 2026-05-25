@@ -122,6 +122,7 @@ namespace sample::timer
             {
                 start = std::chrono::high_resolution_clock::now();
                 instance.post(generic::deltaTime{1/60.f});
+                instance.endFrame();
             }
         }
     }

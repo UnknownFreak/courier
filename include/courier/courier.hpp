@@ -6,7 +6,7 @@
 
 #include <mutex>
 #include <vector>
-#include <memory>
+#include <string>
 
 #include "courier/subscriberId.hpp"
 #include "omp.h"
@@ -19,20 +19,19 @@ namespace courier
 	public:
 
 		explicit Courier(const Settings& _settings) : settings(_settings)
-	//		Courier::Courier(const Settings& in_settings) : settings(in_settings)
 		{
-		static int maxThreads = omp_get_max_threads();
+			static int maxThreads = omp_get_max_threads();
 
-		if (settings.threadSettings == courier::ThreadingSettings::Fixed)
-		{
-			int numThreads = maxThreads;
-			if (settings.numThreads < maxThreads)
+			if (settings.threadSettings == courier::ThreadingSettings::Fixed)
 			{
-				numThreads = settings.numThreads;
+				int numThreads = maxThreads;
+				if (settings.numThreads < maxThreads)
+				{
+					numThreads = settings.numThreads;
+				}
+				omp_set_num_threads(numThreads);
 			}
-			omp_set_num_threads(numThreads);
 		}
-	}
 		Courier& operator=(const Courier) = delete;
 
 		/// <summary>
@@ -44,20 +43,12 @@ namespace courier
 		void post(const MessageType& message)
 		{
 			coll.onMessage(message);
-			
-			for(auto i: scheduledMessages)
-			{
-				i();
-			}
-			scheduledMessages.clear();
-
-			coll.remove(scheduledRemovals);
-			scheduledRemovals.clear();
 		}
 
 		template<class MessageType>
 		void schedule(SubscriberId id, const MessageType& message)
 		{
+			std::lock_guard<std::mutex> lock(mtx);
 			scheduledMessages.push_back([this, id, &message](){
 				coll.onMessage(id, message);
 			});
@@ -65,7 +56,19 @@ namespace courier
 
 		void remove(SubscriberId id)
 		{
+			std::lock_guard<std::mutex> lock(removeMtx);
 			scheduledRemovals.emplace_back(id);
+		}
+
+		void endFrame()
+		{
+			for(auto& i: scheduledMessages)
+			{
+				i();
+			}
+			scheduledMessages.clear();
+			coll.remove(scheduledRemovals);
+			scheduledRemovals.clear();
 		}
 
 		size_t messageCount();
@@ -78,6 +81,7 @@ namespace courier
 		size_t m_messages = 0;
 		const Settings settings;
 		std::mutex mtx;
+		std::mutex removeMtx;
 
 		std::vector<std::function<void(void)>> scheduledMessages;
 		std::vector<SubscriberId> scheduledRemovals;
