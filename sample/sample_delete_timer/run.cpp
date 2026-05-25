@@ -70,50 +70,14 @@ namespace sample::timer
 
 namespace courier
 {
-    /*
-    template<>
-	void handleMessage<sample::generic::object, sample::generic::deltaTime>(std::vector<sample::generic::object>&, const sample::generic::deltaTime&)
-	{
-		static bool once = true;
-		if(once)
-		{
-			std::cout << "deltatime messages ignored for object" << std::endl;
-			once = false;
-		}
-		return;
-	}
-
-    template<>
-	void handleMessage<sample::timer::delete_timer, sample::generic::deleteObject>(std::vector<sample::timer::delete_timer>&, const sample::generic::deleteObject&)
-	{
-		static bool once = true;
-		if(once)
-		{
-			std::cout << "deleteObject messages ignored for delete_timer" << std::endl;
-			once = false;
-		}
-		return;
-	}
-
-    template<>
-	void handleMessage<sample::timer::delete_timer, sample::generic::deleteObject>(std::vector<sample::timer::delete_timer>&, SubscriberId, const sample::generic::deleteObject&)
-	{
-		static bool once = true;
-		if(once)
-		{
-			std::cout << "deleteObject messages ignored for delete_timer" << std::endl;
-			once = false;
-		}
-		return;
-	}*/
-
+    
     template<>
 	void handleObjectMessage(sample::timer::delete_timer& timer, const sample::generic::deltaTime&time)
 	{
         timer.remainingTime-= time.dt;
         if(timer.remainingTime < 0)
         {
-            std::cout << "Requesting to delete object id[" << std::to_string((size_t)timer.id) <<"]" << std::endl;
+            std::cout << "Requesting to delete object id[" << (size_t)timer.id <<"]" << std::endl;
             sample::timer::ptr->schedule(timer.id, sample::generic::deleteObject{});
         }
 	}
