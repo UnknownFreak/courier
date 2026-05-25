@@ -120,6 +120,8 @@ namespace bench
 			courier::handleMessage(collection, message);
 			courier::handleMessage(collection2, message);
 		}
+
+		void remove(std::vector<courier::SubscriberId>&) {}
 	};
 
 	exampleSubscriber* setup1(auto& oc, size_t number)

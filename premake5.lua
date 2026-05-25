@@ -52,7 +52,8 @@ project "sample"
 	
 	targetdir "bin/%{cfg.buildcfg}"
 
-	includedirs { "include" }
+	includedirs { "include", "sample" }
+	defines {"COURIER_ALLOW_EMPTY=1", "COURIER_LOG_EMPTY_HANDLER=1"}
 
 	links { "courier" }
 	files { "sample/**.cpp", "sample/**.hpp" }

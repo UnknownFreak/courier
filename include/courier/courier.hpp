@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 
+#include "courier/subscriberId.hpp"
 #include "omp.h"
 
 namespace courier
@@ -43,6 +44,23 @@ namespace courier
 		void post(const MessageType& message)
 		{
 			coll.onMessage(message);
+			
+			for(auto i: scheduledMessages)
+			{
+				i();
+			}
+			scheduledMessages.clear();
+
+			coll.remove(scheduledRemovals);
+			scheduledRemovals.clear();
+		}
+
+		template<class MessageType>
+		void schedule(SubscriberId id, const MessageType& message)
+		{
+			scheduledMessages.push_back([this, id, &message](){
+				coll.onMessage(id, message);
+			});
 		}
 
 /*		/// <summary>
@@ -151,8 +169,10 @@ namespace courier
 		}
 		*/
 
-		void handleScheduledMessages();
-		void handleScheduledRemovals();
+		void remove(SubscriberId id)
+		{
+			scheduledRemovals.emplace_back(id);
+		}
 
 		size_t messageCount();
 		size_t getScheduledMessageCount();
@@ -166,6 +186,7 @@ namespace courier
 		std::mutex mtx;
 
 		std::vector<std::function<void(void)>> scheduledMessages;
+		std::vector<SubscriberId> scheduledRemovals;
 
 	};
 
