@@ -11,7 +11,7 @@ namespace courier
     template<class Object, class Message>
     void handleObjectMessage(Object&, const Message&)
     {
-        #if defined COURIER_ALLOW_EMPTY == 0
+        #if defined COURIER_ALLOW_EMPTY_HANDLER == 0
         static_assert(false, "Template not specialized");
         #else
             #if defined COURIER_LOG_EMPTY_HANDLER == 1
