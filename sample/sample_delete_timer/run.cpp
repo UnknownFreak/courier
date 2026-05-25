@@ -84,7 +84,7 @@ namespace courier
     template<>
 	void handleObjectMessage(sample::generic::object& obj, const sample::generic::deleteObject&)
 	{
-        std::cout << "Handling courier delete object request for id[" << std::to_string((size_t)obj.id) <<"]" << std::endl;
+        std::cout << "Handling courier delete object request for id[" << (size_t)obj.id <<"]" << std::endl;
         sample::timer::ptr->remove(obj.id);
 	}
 }
