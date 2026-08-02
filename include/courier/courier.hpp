@@ -1,14 +1,13 @@
 #pragma once
 
-#include <courier/settings.hpp>
 
 #include <functional>
 
 #include <mutex>
-#include <vector>
-#include <string>
+#include <string_view>
+#include <courier/settings.hpp>
+#include <courier/objectId.hpp>
 
-#include "courier/subscriberId.hpp"
 #include "omp.h"
 
 namespace courier
@@ -40,57 +39,113 @@ namespace courier
 		/// <param name="topic">The topic to send the message to</param>
 		/// <param name="message">The message to send</param>
 		template<class MessageType>
-		void post(const MessageType& message)
+		[[using gnu: hot, flatten]] void post(const MessageType& message)
 		{
+			m_messages++;
 			coll.onMessage(message);
 		}
 
 		template<class MessageType>
-		void schedule(SubscriberId id, const MessageType& message)
+		void schedule(const MessageType& message)
 		{
 			std::lock_guard<std::mutex> lock(mtx);
-			scheduledMessages.push_back([this, id, &message](){
+			scheduledMessages.push_back([this, message](){
+				coll.onMessage(message);
+			});
+		}
+
+		template<class MessageType>
+		void schedule(ObjectId id, const MessageType& message)
+		{
+			std::lock_guard<std::mutex> lock(mtx);
+			scheduledMessages.push_back([this, id, message](){
 				coll.onMessage(id, message);
 			});
 		}
 
-		void remove(SubscriberId id)
+		void scheduleFunction(const std::function<void(void)>& fun)
 		{
-			std::lock_guard<std::mutex> lock(removeMtx);
-			scheduledRemovals.emplace_back(id);
+			std::lock_guard<std::mutex> lock(mtx);
+			scheduledMessages.push_back([this, fun](){
+				fun();
+			});
 		}
 
-		void endFrame()
+		bool add(size_t templateId = 0)
 		{
-			for(auto& i: scheduledMessages)
+			return scheduledAdditions.push(templateId);
+		}
+
+		bool remove(uint64_t id)
+		{
+			return scheduledRemovals.push(id);
+		}
+
+		[[using gnu: hot, flatten]] void beginFrame()
+		{
+			if(scheduledAdditions.size() == 0)
 			{
-				i();
+				return;
 			}
-			scheduledMessages.clear();
-			coll.remove(scheduledRemovals);
-			scheduledRemovals.clear();
+			size_t templateId;
+			while(scheduledAdditions.pop(templateId))
+			{
+				coll.add(ObjectId(), templateId);
+			}
+		}
+
+		[[using gnu: hot, flatten]] void endFrame()
+		{
+			while(scheduledMessages.size() != 0)
+			{
+				auto local = scheduledMessages;
+				scheduledMessages.clear();
+				for(auto& i: local)
+				{
+					i();
+				}
+			}
+			if(scheduledRemovals.size() == 0)
+			{
+				return;
+			}
+			uint64_t id;
+			while(scheduledRemovals.pop(id))
+			{
+				coll.remove(ObjectId::from(id));
+			}
 		}
 
 		size_t messageCount();
 		size_t getScheduledMessageCount();
 
 		Collection& getCollection() { return coll;}
+
+		/*
+		Statistics getStatistics() 
+		{
+			return {m_messages,
+				scheduledMessages.size(),
+				scheduledRemovals.size(),
+				coll.getIdMapping(),
+				coll.getNumSubscribers(),
+				coll.getSubscriberHandledMessages()
+			};
+		};
+		*/
+
 	private:
 		Collection coll;
 
 		size_t m_messages = 0;
 		const Settings settings;
 		std::mutex mtx;
-		std::mutex removeMtx;
 
-		std::vector<std::function<void(void)>> scheduledMessages;
-		std::vector<SubscriberId> scheduledRemovals;
+		vector<std::function<void(void)>> scheduledMessages;
+		queue<size_t, 1024> scheduledAdditions;
+		queue<uint64_t, 1024> scheduledRemovals;
 
 	};
 
-	void init(const Settings& in_settings);
-	void shutdown();
-	//Courier& get();
-
-	const std::string getVersion();
+	const std::string_view getVersion();
 }

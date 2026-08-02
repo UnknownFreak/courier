@@ -1,6 +1,7 @@
 #pragma once
 
-#include "courier/subscriberId.hpp"
+#include <courier/settings.hpp>
+#include <courier/objectId.hpp>
 #include <vector>
 #include <omp.h>
 #include <courier/logger.hpp>
@@ -8,15 +9,15 @@
 namespace courier
 {
 
-    template<class Object, class Message>
-    void handleObjectMessage(Object&, const Message&)
+    template<class Message>
+    void handleEvent(const Message&)
     {
         #if defined COURIER_ALLOW_EMPTY_HANDLER == 0
         static_assert(false, "Template not specialized");
         #else
             #if defined COURIER_LOG_EMPTY_HANDLER == 1
-            static bool b= true;
-            if(b)
+            static bool once = true;
+            if(once)
             {
                 #ifdef _WIN32
                 courier::info("TOOD ... windows template args resolving");
@@ -25,14 +26,37 @@ namespace courier
                 s.append(__PRETTY_FUNCTION__);
                 courier::info(s);
                 #endif
-                b = false;
+                once = false;
+            }
+            #endif
+        #endif
+    }
+
+    template<class Object, class Message>
+    void handleObjectMessage(Object&, const Message&)
+    {
+        #if defined COURIER_ALLOW_EMPTY_HANDLER == 0
+        static_assert(false, "Template not specialized");
+        #else
+            #if defined COURIER_LOG_EMPTY_HANDLER == 1
+            static bool once = true;
+            if(once)
+            {
+                #ifdef _WIN32
+                courier::info("TOOD ... windows template args resolving");
+                #else
+                std::string s = "handleObjectMessage doing nothing for: ";
+                s.append(__PRETTY_FUNCTION__);
+                courier::info(s);
+                #endif
+                once = false;
             }
             #endif
         #endif
     }
 
     template<class Object, class MessageType>
-    void handleMessage(std::vector<Object>& v, const MessageType& message)
+    [[using gnu: hot, flatten]] void handleMessage(std::vector<Object>& v, const MessageType& message)
     {
 #ifdef _WIN32
             int index;
@@ -47,15 +71,18 @@ namespace courier
     }
 
     template<class Object, class MessageType>
-    void handleMessage(std::vector<Object>& v, SubscriberId id, const MessageType& message)
+    void handleMessage(std::vector<Object>& v, ObjectId id, const MessageType& message)
     {
         for (size_t index = 0; index < v.size(); index++)
         {
-            if(id == v[index].id)
+            if(id.id() == v[index].id.id())
             {
                 courier::handleObjectMessage(v[index], message);
+                if constexpr(is_profiling_enabled())
+                {
+                    
+                }
             }
         }
     }
-
 }

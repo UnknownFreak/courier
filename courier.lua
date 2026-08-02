@@ -1,4 +1,20 @@
 
+result, errorCode = os.outputof("git describe --tags --always --dirty=-d")
+s = string.format(
+[[
+#include <courier/courier.hpp>
+#include <string_view>
+
+namespace courier
+{
+    const std::string_view getVersion()
+    {
+        return "%s";
+    }
+}
+]], result)
+io.writefile("src/version.cpp", s)
+
 project "courier"
 	kind "staticlib"
 

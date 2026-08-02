@@ -1,7 +1,7 @@
 #include "run.h"
 #include "courier/messageHandler.hpp"
 
-#include "courier/subscriberId.hpp"
+#include "courier/objectId.hpp"
 #include "courier/util.hpp"
 
 #include <cstddef>
@@ -12,6 +12,7 @@
 #include <courier/logger.hpp>
 
 #include <iostream>
+#include <vector>
 
 
 namespace sample::timer
@@ -21,9 +22,9 @@ namespace sample::timer
 
     struct delete_timer
     {
-        courier::SubscriberId id;
+        courier::ObjectId id;
         float remainingTime;
-        courier::SubscriberId getId() const { return id;}
+        courier::ObjectId getId() const { return id;}
     };
 
     struct Collection
@@ -38,20 +39,23 @@ namespace sample::timer
 		}
 
         template<class Type>
-		void onMessage(courier::SubscriberId id, const Type& message)
+		void onMessage(courier::ObjectId id, const Type& message)
 		{
 			courier::handleMessage(objects, id, message);
 			courier::handleMessage(deleteTimers, id, message);
 		}
 
-        void remove(std::vector<courier::SubscriberId>& vec)
+        void remove(const courier::ObjectId id)
         {
+            /*
             if(vec.size() != 0)
             {
                 std::cout << "Removing ["<< vec.size() << "] item(s) from container [size="<< objects.size() << "]" << std::endl;
             }
+            */
+            std::vector<courier::ObjectId> vec = {id};
             courier::util::vectorFastRemove(objects,vec, false);
-            courier::util::vectorFastRemove(deleteTimers,vec, true);
+            //courier::util::vectorFastRemove(deleteTimers,vec, true);
         }
 
         bool hasObjects() const
@@ -77,15 +81,15 @@ namespace courier
         timer.remainingTime-= time.dt;
         if(timer.remainingTime < 0)
         {
-            std::cout << "Requesting to delete object id[" << (size_t)timer.id <<"]" << std::endl;
+            std::cout << "Requesting to delete object id[" << timer.id <<"]" << std::endl;
             sample::timer::ptr->schedule(timer.id, sample::generic::deleteObject{});
         }
 	}
     template<>
 	void handleObjectMessage(sample::generic::object& obj, const sample::generic::deleteObject&)
 	{
-        std::cout << "Handling courier delete object request for id[" << (size_t)obj.id <<"]" << std::endl;
-        sample::timer::ptr->remove(obj.id);
+        std::cout << "Handling courier delete object request for id[" << obj.id <<"]" << std::endl;
+        sample::timer::ptr->remove(obj.id.rawId());
 	}
 }
 
@@ -94,8 +98,8 @@ namespace sample::timer
 
     void addObject(auto& coll, float timeUntilDestruction)
     {
-        courier::SubscriberId id = (courier::SubscriberId)g_id++;
-        std::cout << "object created with id ["<< (size_t)id << "] with timed life [duraction="<< timeUntilDestruction <<"s]" << std::endl;
+        courier::ObjectId id;
+        std::cout << "object created with id ["<< id << "] with timed life [duraction="<< timeUntilDestruction <<"s]" << std::endl;
         coll.objects.emplace_back(id);
         coll.deleteTimers.emplace_back(id, timeUntilDestruction);
     }

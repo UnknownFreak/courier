@@ -1,6 +1,7 @@
 #include "sample.hpp"
 #include "menu.h"
 #include <sample_delete_timer/run.h>
+#include <sample_simulation/run.h>
 #include <iostream>
 
 namespace sample
@@ -13,6 +14,7 @@ namespace sample
 			menu::showMenu("Sample application configuration",
 			{
 				"Run timer sample",
+				"Run simulation sample"
 			},
 		"[any other key] - Go back to main menu");
 
@@ -24,6 +26,11 @@ namespace sample
 				{
 					std::cout << "Timer sample selected" << std::endl;
 					timer::run();
+				}
+				else if(input[0]=='2')
+				{
+					std::cout << "Simulation sample selected" << std::endl;
+					simulation::run();
 				}
 			}
 		}

@@ -1,20 +1,17 @@
 
-#include "bench.hpp"
+#include "stresstest.hpp"
 
 #include <courier/courier.hpp>
-#include "courier/settings.hpp"
+#include <courier/settings.hpp>
 #include <courier/messageHandler.hpp>
-#include <courier/subscriberId.hpp>
 
 #include <iostream>
 #include <chrono>
 #include <omp.h>
 
 
-namespace bench
+namespace stresstest
 {
-
-
 
 	//syntax sugaring with naming
 
@@ -26,38 +23,45 @@ namespace bench
 	struct /*__attribute__((__aligned__(64)))*/ exampleSubscriber
 	{
 		// isAlive makes sure the subscriber target callback is valid before executing
-		courier::SubscriberId id;
+		courier::ObjectId id;
 
 		int counter;
 		int counter2;
 		//int bloat[20];
 
-		exampleSubscriber() : id((courier::SubscriberId)g_id++), counter(0), counter2(0)//, bloat{ 0 }
+		exampleSubscriber() : id(), counter(0), counter2(0)//, bloat{ 0 }
+		{
+		}
+
+		exampleSubscriber(const courier::ObjectId& inId) : id(inId), counter(0), counter2(0)//, bloat{ 0 }
 		{
 		}
 
 		~exampleSubscriber() = default;
 
-		inline courier::SubscriberId getId() const { return id; }
+		inline courier::ObjectId getId() const { return id; }
 
 	};
 
 	struct /*__attribute__((__aligned__(64)))*/ exampleSubscriber2
 	{
 		// isAlive makes sure the subscriber target callback is valid before executing
-		courier::SubscriberId id;
+		courier::ObjectId id;
 
 		int counter;
 		int counter2;
 		float x=0,y=0,z=0;
 
-		exampleSubscriber2() : id((courier::SubscriberId)g_id2++), counter(0), counter2(0)
+		exampleSubscriber2() : id(), counter(0), counter2(0)
+		{
+		}
+		exampleSubscriber2(const courier::ObjectId& inId) : id(inId), counter(0), counter2(0)//, bloat{ 0 }
 		{
 		}
 
 		~exampleSubscriber2() = default;
 
-		inline courier::SubscriberId getId() const { return id; }
+		inline courier::ObjectId getId() const { return id; }
 
 	};
 
@@ -66,7 +70,7 @@ namespace bench
 namespace courier
 {
 	template<>
-	void handleMessage<bench::exampleSubscriber, float>(std::vector<bench::exampleSubscriber>&, const float&)
+	void handleMessage<stresstest::exampleSubscriber, float>(std::vector<stresstest::exampleSubscriber>&, const float&)
 	{
 		static bool once = true;
 		if(once)
@@ -78,36 +82,36 @@ namespace courier
 	}
 
 	template<>
-	void handleObjectMessage(bench::exampleSubscriber& ex, const int &)
+	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber& ex, const int &)
 	{
 		ex.counter++;
 	}
 
 	template<>
-	void handleObjectMessage(bench::exampleSubscriber& ex, const bench::customType &)
+	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber& ex, const stresstest::customType &)
 	{
 		ex.counter2++;
 	}
 	
 	template<>
-	void handleObjectMessage(bench::exampleSubscriber2& ex, const int &)
+	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber2& ex, const int &)
 	{
 		ex.counter++;
 	}
 
 	template<>
-	void handleObjectMessage(bench::exampleSubscriber2& ex, const bench::customType &)
+	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber2& ex, const stresstest::customType &)
 	{
 		ex.counter2++;
 	}
 		
 	template<>
-	void handleObjectMessage(bench::exampleSubscriber2& , const float &)
+	void handleObjectMessage(stresstest::exampleSubscriber2& , const float &)
 	{
 	}
 }
 
-namespace bench
+namespace stresstest
 {
 	struct Collection
 	{
@@ -121,27 +125,22 @@ namespace bench
 			courier::handleMessage(collection2, message);
 		}
 
-		void remove(std::vector<courier::SubscriberId>&) {}
+		void add(const courier::ObjectId& id, size_t templateId)
+		{
+			/*We don't use the add function since we contol the add/ remove conditons*/
+			(void)id;(void)templateId;
+		}
+		void remove(const courier::ObjectId& id) { (void)id;}
 	};
 
-	exampleSubscriber* setup1(auto& oc, size_t number)
+	auto* setup(auto& oc, size_t number)
 	{
-		exampleSubscriber* p = nullptr;
 		for (size_t i = 0; i < number; i++)
 		{
-			p = &oc.emplace_back();
+			oc.emplace_back();
 		}
-		return p;
-	}
-
-	exampleSubscriber2* setup2(auto& oc, size_t number)
-	{
-		exampleSubscriber2* p = nullptr;
-		for (size_t i = 0; i < number; i++)
-		{
-			p = &oc.emplace_back();
-		}
-		return p;
+		auto it = oc.rbegin();
+		return &(*it);
 	}
 
 	void run2(courier::Courier<Collection>* oc, std::chrono::seconds dur)
@@ -150,6 +149,7 @@ namespace bench
 		int counter = 0;
 		while (1)
 		{
+			oc->beginFrame();
 			oc->post(1);
 			counter++;
 			if (counter == 10)
@@ -159,6 +159,7 @@ namespace bench
 				oc->post(customType{});
 
 			}
+			oc->endFrame();
 			auto end = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double, std::milli> elapsed = end - start;
 			if (elapsed >= dur)
@@ -174,8 +175,8 @@ namespace bench
 		msgStat avg{ 0,0,0 };
 
 
-		auto ex = setup1(instance->getCollection().collection, numSubscribers);
-		setup2(instance->getCollection().collection2, numSubscribers);
+		auto ex = setup(instance->getCollection().collection, numSubscribers);
+		setup(instance->getCollection().collection2, numSubscribers);
 
 		for (size_t i = 0; i < times; i++)
 		{
@@ -197,9 +198,10 @@ namespace bench
 		}
 
 		std::cout << "Test results: " << std::endl;
-		std::cout << "Max: " << max.msgcount << " msg/s: " << max.avgCount << std::endl;
-		std::cout << "Min: " << min.msgcount << " msg/s: " << min.avgCount << std::endl;
-		std::cout << "Avg: " << avg.msgcount / times << " msg/s: " << avg.avgCount << std::endl;
+		std::cout << "Total Subscribers: " << instance->getCollection().collection.size() + instance->getCollection().collection2.size() << std::endl;
+		std::cout << "Max: " << max.msgcount << ", msg/s: " << max.avgCount << std::endl;
+		std::cout << "Min: " << min.msgcount << ", msg/s: " << min.avgCount << std::endl;
+		std::cout << "Avg: " << avg.msgcount / times << ", msg/s: " << avg.avgCount << std::endl;
 	}
 
 	std::string getCores(int cores)
@@ -214,43 +216,12 @@ namespace bench
 		return "cores = auto";
 	}
 
-	void run()
+	void run(int cores, size_t numItems, int times)
 	{
-
-		std::string input;
-		int cores = -1;
 
 		using namespace std::chrono_literals;
 
 		std::chrono::duration d = 2s;
-		size_t numItems = 1000000;
-		size_t times = 3;
-
-		std::cout << "Benchmark configuration" << std::endl;
-		std::cout << "configure? (y/n)" << std::endl;
-		std::getline(std::cin, input);
-
-		if (input.length() > 0 && input[0] == 'y')
-		{
-			std::cout << "Num cores: (default=automatic)" << std::endl;
-			std::getline(std::cin, input);
-			cores = atoi(input.c_str());
-
-			std::cout << "Num items: (default=1000000)" << std::endl;
-			std::getline(std::cin,input);
-			if (input.length() > 0)
-			{
-				numItems = strtoull(input.c_str(), nullptr, 10);
-				if (numItems == 0)
-				{
-					numItems = 1000000;
-				}
-			}
-			std::cout << "Num runs: (default=3)" << std::endl;
-			std::getline(std::cin, input);
-			if(input.length() > 0)
-				times = strtoull(input.c_str(), nullptr, 10);
-		}
 
 		{
 			courier::Courier<Collection>* instance;
@@ -263,13 +234,11 @@ namespace bench
 				instance = new courier::Courier<Collection>(courier::Settings{ courier::ThreadingSettings::Auto });
 			}
 			{
-				std::cout << "Benching courier "<< times <<" times, using " << getCores(cores) << " with " << numItems << " subscribers for " << d.count() << " seconds" << std::endl;
+				std::cout << "Testing courier "<< times <<" times, using " << getCores(cores) << " with " << numItems << " subscribers for " << d.count() << " seconds" << std::endl;
 
 				runBench(instance, numItems, d, times);
 				std::cout << std::endl;
 			}
-
-			std::cout << std::endl;
 
 			delete instance;
 		}

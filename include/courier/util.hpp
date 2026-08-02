@@ -59,7 +59,7 @@ namespace courier::util
 				{
 					containerToClear.pop_back();
 				}
-				std::sort(containerToClear.begin(), containerToClear.end(), [](const auto& a, const auto& b) -> bool { return (size_t)a.getId() < (size_t)b.getId(); });
+				std::sort(containerToClear.begin(), containerToClear.end(), [](const auto& a, const auto& b) -> bool { return a.getId() < b.getId(); });
 			}
 			if(clear)
 				referenceIds.clear();

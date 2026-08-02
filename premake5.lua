@@ -27,23 +27,6 @@ workspace "courier"
 		enablewarnings { "non-virtual-dtor" }
 		linkoptions { "-fopenmp" }
 
-
-result, errorCode = os.outputof("git describe --tags --always --dirty=-d")
-s = string.format(
-[[
-#include <courier/courier.hpp>
-#include <string>
-
-namespace courier
-{
-    const std::string getVersion()
-    {
-        return "%s";
-    }
-}
-]], result)
-io.writefile("src/version.cpp", s)
-
 include "courier.lua"
 	
 		
@@ -52,9 +35,42 @@ project "sample"
 	
 	targetdir "bin/%{cfg.buildcfg}"
 
-	includedirs { "include", "sample" }
+	includedirs { "include", "sample", "vnd/lockfree_mpmc_queue" }
 	defines {"COURIER_ALLOW_EMPTY_HANDLER=1", "COURIER_LOG_EMPTY_HANDLER=1"}
 
 	links { "courier" }
 	files { "sample/**.cpp", "sample/**.hpp" }
+	openmp "On"
+--[[
+project "imcourier"
+	kind "staticlib"
+	targetdir "bin/%{cfg.buildcfg}"
+
+	includedirs { "include", "extension", "vnd/imgui" }
+	defines {"COURIER_ALLOW_EMPTY_HANDLER=1", "COURIER_LOG_EMPTY_HANDLER=1"}
+
+	links { "courier"}
+	files { "extension/*.cpp"}
+	openmp "On"
+
+project "gruntime"
+	kind "consoleApp"
+	targetdir "bin/%{cfg.buildcfg}"
+
+	includedirs { "include", "extension", "vnd/imgui" }
+	defines {"COURIER_ALLOW_EMPTY_HANDLER=1", "COURIER_LOG_EMPTY_HANDLER=1"}
+
+	links { "courier", "imcourier", "SDL3" }
+	files { "runtime/*.cpp", "vnd/imgui/*.cpp", "vnd/imgui/backends/imgui_impl_sdlrenderer3.cpp", "vnd/imgui/backends/imgui_impl_sdl3.cpp"}
+	openmp "On"
+--]]
+project "tests"
+	kind "consoleApp"
+	targetdir "bin/%{cfg.buildcfg}"
+
+	includedirs { "include", "tests"}
+	defines {"COURIER_ALLOW_EMPTY_HANDLER=1", "COURIER_LOG_EMPTY_HANDLER=1"}
+
+	links { "courier", "Catch2"}
+	files { "tests/*.cpp", "tests/*.hpp" }
 	openmp "On"

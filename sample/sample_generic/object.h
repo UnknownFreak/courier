@@ -1,19 +1,18 @@
 #pragma once
 
 
-#include "courier/subscriberId.hpp"
+#include "courier/objectId.hpp"
 
 namespace sample::generic
 {
 
     struct deltaTime {float dt;};
     struct deleteObject {};
-    struct createObject {int objectType;};
 
     struct object
     {
-        courier::SubscriberId id;
-        courier::SubscriberId getId() const { return id;}
+        courier::ObjectId id;
+        courier::ObjectId getId() const { return id;}
     };
 
 }

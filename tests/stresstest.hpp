@@ -1,8 +1,9 @@
 #pragma once
 
-namespace bench
+#include <cstddef>
+namespace stresstest
 {
-	void run();
+	void run(int cores, size_t numItems, int times);
 
 
 	struct msgStat
