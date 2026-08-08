@@ -13,6 +13,9 @@ namespace courier
 	{
 		ThreadingSettings threadSettings = ThreadingSettings::Auto;
 		int numThreads = -1;
+        // one for now is the most optimal.
+        // Need a real simulation test where the scheduling thread gets item added to it dynamically
+        int numScheduleThreads = 1;
 	};
 }
 

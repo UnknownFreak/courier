@@ -63,7 +63,7 @@ namespace courier
 #else
             size_t index;
 #endif
-        #pragma omp parallel for
+        #pragma omp parallel for// num_threads(16)
         for (index = 0; index < v.size(); index++)
         {
             courier::handleObjectMessage(v[index], message);

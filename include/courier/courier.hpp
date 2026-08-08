@@ -1,12 +1,15 @@
 #pragma once
 
 
+#include <condition_variable>
 #include <functional>
 
 #include <mutex>
 #include <string_view>
 #include <courier/settings.hpp>
 #include <courier/objectId.hpp>
+#include <thread>
+#include <vector>
 
 #include "omp.h"
 
@@ -30,8 +33,33 @@ namespace courier
 				}
 				omp_set_num_threads(numThreads);
 			}
+			for(int i=0; i < _settings.numScheduleThreads; i++)
+			{
+				scheduledMessageThread.push_back(std::thread{
+					[this]()
+					{
+						while(running)
+						{
+							runSchedulerTick();
+						}
+					}
+				});
+			}
+
 		}
 		Courier& operator=(const Courier) = delete;
+
+		~Courier()
+		{
+			running = false;
+			for(auto& thread : scheduledMessageThread)
+			{
+				if(thread.joinable())
+				{
+					thread.join();
+				}
+			}
+		}
 
 		/// <summary>
 		/// Post a message to all subscribers on a topic
@@ -48,25 +76,40 @@ namespace courier
 		template<class MessageType>
 		void schedule(const MessageType& message)
 		{
+			scheduledMessages.push([this, message](){
+				coll.onMessage(message);
+			});
+			/*
 			std::lock_guard<std::mutex> lock(mtx);
 			scheduledMessages.push_back([this, message](){
 				coll.onMessage(message);
 			});
+			*/
 		}
 
 		template<class MessageType>
 		void schedule(ObjectId id, const MessageType& message)
 		{
+			/*
 			std::lock_guard<std::mutex> lock(mtx);
 			scheduledMessages.push_back([this, id, message](){
+				coll.onMessage(id, message);
+			});
+			*/
+			scheduledMessages.push([this, id, message](){
 				coll.onMessage(id, message);
 			});
 		}
 
 		void scheduleFunction(const std::function<void(void)>& fun)
 		{
+			/*
 			std::lock_guard<std::mutex> lock(mtx);
 			scheduledMessages.push_back([this, fun](){
+				fun();
+			});
+			*/
+			scheduledMessages.push([fun](){
 				fun();
 			});
 		}
@@ -96,6 +139,7 @@ namespace courier
 
 		[[using gnu: hot, flatten]] void endFrame()
 		{
+			/*
 			while(scheduledMessages.size() != 0)
 			{
 				auto local = scheduledMessages;
@@ -105,6 +149,13 @@ namespace courier
 					i();
 				}
 			}
+			*/
+			//wait = false;
+			while(scheduledMessages.size() != 0)
+			{
+				// no-op
+			}
+			//wait = true;
 			if(scheduledRemovals.size() == 0)
 			{
 				return;
@@ -134,16 +185,49 @@ namespace courier
 		};
 		*/
 
+
 	private:
+
+		[[using gnu: hot, flatten]] void runSchedulerTick()
+		{
+			/*
+			while(scheduledMessages.size() != 0)
+			{
+				auto local = scheduledMessages;
+				scheduledMessages.clear();
+				for(auto& i: local)
+				{
+					i();
+				}
+			}
+			*/
+			{
+				/*
+				while(wait)
+				{
+
+				}
+				*/
+				std::function<void()> fun;
+				while(scheduledMessages.pop(fun) && running)
+				{
+					fun();
+				}
+			}
+
+		}
 		Collection coll;
 
 		size_t m_messages = 0;
 		const Settings settings;
 		std::mutex mtx;
 
-		vector<std::function<void(void)>> scheduledMessages;
+		queue<std::function<void(void)>> scheduledMessages;
 		queue<size_t, 1024> scheduledAdditions;
 		queue<uint64_t, 1024> scheduledRemovals;
+		bool running = true;
+		bool wait = true;
+		std::vector<std::thread> scheduledMessageThread;
 
 	};
 

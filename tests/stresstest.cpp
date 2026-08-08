@@ -12,6 +12,8 @@
 
 namespace stresstest
 {
+	struct Collection;
+	static inline courier::Courier<Collection>* g_instance;
 
 	//syntax sugaring with naming
 
@@ -19,6 +21,7 @@ namespace stresstest
 	size_t g_id2 = 0;
 
 	struct customType {};
+	struct customType2 {};
 
 	struct /*__attribute__((__aligned__(64)))*/ exampleSubscriber
 	{
@@ -70,18 +73,6 @@ namespace stresstest
 namespace courier
 {
 	template<>
-	void handleMessage<stresstest::exampleSubscriber, float>(std::vector<stresstest::exampleSubscriber>&, const float&)
-	{
-		static bool once = true;
-		if(once)
-		{
-			std::cout << "Float messages ignored for exampleSubscriber" << std::endl;
-			once = false;
-		}
-		return;
-	}
-
-	template<>
 	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber& ex, const int &)
 	{
 		ex.counter++;
@@ -94,20 +85,19 @@ namespace courier
 	}
 	
 	template<>
+	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber&, const stresstest::customType2 &)
+	{
+	}
+
+	template<>
 	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber2& ex, const int &)
 	{
 		ex.counter++;
 	}
-
 	template<>
 	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber2& ex, const stresstest::customType &)
 	{
 		ex.counter2++;
-	}
-		
-	template<>
-	void handleObjectMessage(stresstest::exampleSubscriber2& , const float &)
-	{
 	}
 }
 
@@ -117,12 +107,31 @@ namespace stresstest
 	{
 		std::vector<exampleSubscriber> collection;
 		std::vector<exampleSubscriber2> collection2;
+		std::vector<exampleSubscriber2> collection3;
+		std::vector<exampleSubscriber2> collection4;
 
 		template<class Type>
 		void onMessage(const Type& message)
 		{
-			courier::handleMessage(collection, message);
-			courier::handleMessage(collection2, message);
+			#pragma omp parallel// num_threads(16)
+			{
+				courier::handleMessage(collection, message);
+				courier::handleMessage(collection2, message);
+				courier::handleMessage(collection3, message);
+				courier::handleMessage(collection4, message);
+			}
+		}
+
+		template<class Type>
+		void onMessage(courier::ObjectId id, const Type& message)
+		{
+			#pragma omp parallel
+			{
+				courier::handleMessage(collection, id, message);
+				courier::handleMessage(collection2, id, message);
+				courier::handleMessage(collection3, id, message);
+				courier::handleMessage(collection4, id, message);
+			}
 		}
 
 		void add(const courier::ObjectId& id, size_t templateId)
@@ -131,6 +140,10 @@ namespace stresstest
 			(void)id;(void)templateId;
 		}
 		void remove(const courier::ObjectId& id) { (void)id;}
+		inline size_t size() 
+		{
+			return collection.size() + collection2.size() + collection3.size() + collection4.size();
+		}
 	};
 
 	auto* setup(auto& oc, size_t number)
@@ -155,8 +168,8 @@ namespace stresstest
 			if (counter == 10)
 			{
 				counter = 0;
-				oc->post(1.0f);
-				oc->post(customType{});
+				// add work onto scheduling thread
+				oc->post(customType2{});
 
 			}
 			oc->endFrame();
@@ -177,6 +190,8 @@ namespace stresstest
 
 		auto ex = setup(instance->getCollection().collection, numSubscribers);
 		setup(instance->getCollection().collection2, numSubscribers);
+		setup(instance->getCollection().collection3, numSubscribers);
+		setup(instance->getCollection().collection4, numSubscribers);
 
 		for (size_t i = 0; i < times; i++)
 		{
@@ -198,7 +213,7 @@ namespace stresstest
 		}
 
 		std::cout << "Test results: " << std::endl;
-		std::cout << "Total Subscribers: " << instance->getCollection().collection.size() + instance->getCollection().collection2.size() << std::endl;
+		std::cout << "Total Subscribers: " << instance->getCollection().size() << std::endl;
 		std::cout << "Max: " << max.msgcount << ", msg/s: " << max.avgCount << std::endl;
 		std::cout << "Min: " << min.msgcount << ", msg/s: " << min.avgCount << std::endl;
 		std::cout << "Avg: " << avg.msgcount / times << ", msg/s: " << avg.avgCount << std::endl;
@@ -233,8 +248,9 @@ namespace stresstest
 			{
 				instance = new courier::Courier<Collection>(courier::Settings{ courier::ThreadingSettings::Auto });
 			}
+			g_instance = instance;
 			{
-				std::cout << "Testing courier "<< times <<" times, using " << getCores(cores) << " with " << numItems << " subscribers for " << d.count() << " seconds" << std::endl;
+				std::cout << "Testing courier "<< times <<" times, using " << getCores(cores) << " with " << numItems << " subscribers per collection " << d.count() << " seconds" << std::endl;
 
 				runBench(instance, numItems, d, times);
 				std::cout << std::endl;
@@ -243,5 +259,18 @@ namespace stresstest
 			delete instance;
 		}
 
+	}
+}
+namespace courier
+{
+	template<>
+	[[using gnu: hot, flatten]] void handleObjectMessage(stresstest::exampleSubscriber2& ex, const stresstest::customType2 &)
+	{
+		static int counter = 100000;
+		if(counter-- == 0)
+		{
+			counter = 100000;
+			stresstest::g_instance->scheduleFunction([&ex](){ex.counter2++;});
+		}
 	}
 }

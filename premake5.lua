@@ -10,8 +10,10 @@ workspace "courier"
 	language "C++"
 	architecture "x64"
 	
-	flags { "FatalCompileWarnings", "MultiProcessorCompile"}
+	flags {"MultiProcessorCompile"}
 	
+	fatalwarnings { "All" }
+
 	filter "configurations:debug"
 		defines {"DEBUG"}
 		symbols "On"
@@ -25,6 +27,7 @@ workspace "courier"
 
 	filter "action:gmake"
 		enablewarnings { "non-virtual-dtor" }
+		buildoptions { "-march=native", "-mtune=native"}
 		linkoptions { "-fopenmp" }
 
 include "courier.lua"
@@ -68,9 +71,9 @@ project "tests"
 	kind "consoleApp"
 	targetdir "bin/%{cfg.buildcfg}"
 
-	includedirs { "include", "tests"}
+	includedirs { "include", "tests", "vnd/lockfree_mpmc_queue"}
 	defines {"COURIER_ALLOW_EMPTY_HANDLER=1", "COURIER_LOG_EMPTY_HANDLER=1"}
 
-	links { "courier", "Catch2"}
+	links { "courier", "Catch2", "pthread"}
 	files { "tests/*.cpp", "tests/*.hpp" }
 	openmp "On"
