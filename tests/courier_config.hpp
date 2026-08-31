@@ -75,12 +75,13 @@ namespace stresstest
 
             [[using gnu: hot, flatten]] size_t size() const
             {
+                std::unique_lock<std::mutex> lock(m_mutex);
                 return m_queue.size();
             }
 
         private:
         QueueType m_queue;
-        std::mutex m_mutex;
+        mutable std::mutex m_mutex;
         std::condition_variable m_cond;
     };
 }

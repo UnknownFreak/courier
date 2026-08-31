@@ -2,6 +2,7 @@
 
 
 #include <condition_variable>
+#include <cstdint>
 #include <functional>
 
 #include <mutex>
@@ -33,6 +34,7 @@ namespace courier
 				}
 				omp_set_num_threads(numThreads);
 			}
+			
 			for(int i=0; i < _settings.numScheduleThreads; i++)
 			{
 				scheduledMessageThread.push_back(std::thread{
@@ -67,7 +69,16 @@ namespace courier
 		/// <param name="topic">The topic to send the message to</param>
 		/// <param name="message">The message to send</param>
 		template<class MessageType>
+			requires (sizeof(MessageType) >= sizeof(uintptr_t))
 		[[using gnu: hot, flatten]] void post(const MessageType& message)
+		{
+			m_messages++;
+			coll.onMessage(message);
+		}
+
+		template<class MessageType>
+			requires (sizeof(MessageType) < sizeof(uintptr_t))
+		[[using gnu: hot, flatten]] void post(const MessageType message)
 		{
 			m_messages++;
 			coll.onMessage(message);
@@ -79,23 +90,13 @@ namespace courier
 			scheduledMessages.push([this, message](){
 				coll.onMessage(message);
 			});
-			/*
-			std::lock_guard<std::mutex> lock(mtx);
-			scheduledMessages.push_back([this, message](){
-				coll.onMessage(message);
-			});
-			*/
+
 		}
 
 		template<class MessageType>
 		void schedule(ObjectId id, const MessageType& message)
 		{
-			/*
-			std::lock_guard<std::mutex> lock(mtx);
-			scheduledMessages.push_back([this, id, message](){
-				coll.onMessage(id, message);
-			});
-			*/
+
 			scheduledMessages.push([this, id, message](){
 				coll.onMessage(id, message);
 			});
@@ -103,15 +104,8 @@ namespace courier
 
 		void scheduleFunction(const std::function<void(void)>& fun)
 		{
-			/*
-			std::lock_guard<std::mutex> lock(mtx);
-			scheduledMessages.push_back([this, fun](){
-				fun();
-			});
-			*/
-			scheduledMessages.push([fun](){
-				fun();
-			});
+
+			scheduledMessages.push(fun);
 		}
 
 		bool add(size_t templateId = 0)
@@ -155,6 +149,30 @@ namespace courier
 			{
 				// no-op
 			}
+
+			running = false;
+			for(auto& thread : scheduledMessageThread)
+			{
+				if(thread.joinable())
+				{
+					thread.join();
+				}
+			}
+			scheduledMessageThread.clear();
+			running = true;
+			for(int i=0; i < settings.numScheduleThreads; i++)
+			{
+				scheduledMessageThread.push_back(std::thread{
+					[this]()
+					{
+						while(running)
+						{
+							runSchedulerTick();
+						}
+					}
+				});
+			}
+			
 			//wait = true;
 			if(scheduledRemovals.size() == 0)
 			{
